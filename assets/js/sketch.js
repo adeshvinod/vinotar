@@ -1,51 +1,65 @@
-let klack;
-let pling;
-let nextKlack = 0; //tells when next kalck sound will appear in milliseconds
-let muted = false;
-let beats=-4;
-let ismetronome=0;
-let tempo_chord=0 //flag to ensure the transition function gets called only once during metronome shifting of chords
-let inputbars=[];
+
+let inputbars=[]; //array of bar-length values of respective chords   
+
+x_scale=0.85*window.outerWidth/1536;    //shifted this here from setup
+y_scale=x_scale;                // canvas scaling variables so that canvas accomodates to any screen size 
+let xoff=15;       //offset values from x and y axis for buttons (SHOW MAP,<,>,+,-)
+let yoff=600*y_scale;
+let nav=0;        //determines direction of navigation. nav=1(forwards) nav=-1(reverse)
+let chords=[]     //array storing every inputed chord/arpeggio/scale in the progression 
+let mapmode=0;    //when mapmode==1, the fretboard maps all inputed notes across the neck
+let totalchords=0; //total chords inputed by user
+
+let c=0;            //index number of current chord[]
+let prevc=0;        //index number of prev chord, if the current chord is the first chord, prevc will be the last chord inputed(cyclic navigation) 
+let show_intervals=0;
+let lerpamount=0    //index for linear interpolation during transition
+let amount=0;       //below threshold value displays transition animation and above threshold displays static map  
+
+let t1;
+let stream_mode_var=0; //toggle green screen as background
+
+let deletenote=0;
+let shownote=1;   //displays note names, C,C#,D etc
+var radius;       //radius of input ellipses
+var c_canv;       //color of paintbrush
+
+let paintcanvas=[];  //array of paint canvas, each chord has a corresponding private canvas,navigation is same for canvas and chords
+let paintmode=0;     //double left click toggles paintmode
+
+let button, button2,button3,button4,button5;
+
+//variables concerning metronome
 let timeNow;
+let klack;   //metronome sound at beats 2,3,4
+let pling;   //metronome sound at beat 1
+let nextKlack = 0; //tells when next kalck sound will appear in milliseconds
+let beats=-4;    //beats set to -4 initially, first 4 beats is just count in, transition animation will get affected by metronome only if beats>=0
+let ismetronome=0; 
+let metro_trans=0 //flag to ensure the transition function gets called only once during metronome shifting of chords
+
+//variables concerning the chord progression navigation bar at the bottom
 let x_barpos;
 let y_barpos;
-let showbars=1;
-let img_add;
-let img_next;
-let img_prev;
-let img_delete;
-x_scale=0.85*window.outerWidth/1536;                     //shifted this here from setup
-y_scale=x_scale;   // canvas scaling variables 
-let xoff=15;
-let yoff=600*y_scale;
-let nav=0; //variable to determine if we are navigating forwards or backwards
+let showbars=1;  //showbar=0 hides the animation incase user wants more space for drawing
 
 function preload() {
   klack = loadSound('assets/klack.wav');
   pling=loadSound('assets/pling.wav');
   klack.playMode('restart');
   pling.playMode('restart');
-  img_add=loadImage('assets/add.png');
-  img_next=loadImage('assets/next.png');
-  img_prev=loadImage('assets/prev.png');
-  img_delete=loadImage('assets/delete.png');
 
 }
 
 function setup() {
  createCanvas(wd,ht*1.5);
- if(wd<800)
- pixelDensity(1);
- // fullscreen();
- back_col=color(0,0,0)
+ back_col=color(0,0,0)   //color of background 
  frameRate(60);
 if(wd<800)
 alert("This App is meant to be used on laptop/desktop and not your mobile phone/tablet.If you still wish to continue with the ugly mobile UI, make sure you rotate your mobile to landscape mode and reload the page");
-
+scale(x_scale,y_scale);
  
- 
- scale(x_scale,y_scale);
- for(let i=0;i<50;i++)
+for(let i=0;i<50;i++)        //creates 50 EMPTY chords initially, so maximum chords in progression can only be 50
   {
     chords[i]=new chordclass();
   }
@@ -148,7 +162,7 @@ alert("This App is meant to be used on laptop/desktop and not your mobile phone/
   //inp.size(200,200);
   
   //PAINT CANVAS
-  for(let i=0;i<50;i++)
+  for(let i=0;i<50;i++)             //similarly we create 50 paintcanvas and bar-length input bars that correspond to the 50 chords
    { 
      inputbars[i]=createInput(1,float);
     inputbars[i].position(0, 0);
@@ -212,22 +226,9 @@ alert("This App is meant to be used on laptop/desktop and not your mobile phone/
 
 
 function draw() {
-  // background(70);
-//x_scale=0.85*window.outerWidth/1536;
- //y_scale=0.85;   // canvas scaling variables 
- //rotate(PI/8);
- //scale(x_scale,y_scale);
- //("window width "+window.outerWidth) ;
- //console.log("paintmode:"+paintmode);
-//  if(window.innerWidth<768)
-  //{translate(900,00,0)
-   //rotate(PI/2);
-  //}
-  //translate(400,-1000,0)
-  //translate(width/2,height/2);
   window.onkeydown = function(e) { 
     return !(e.keyCode == 32);
-};             //prevent page scrolling when space is pressed
+};             //prevent page scrolling when space is pressed, prevents default behaviour
  
    for(let i=0;i<chords.length;i++) //50 is the number of intial chords
     {
@@ -240,7 +241,7 @@ function draw() {
       inputbars[i].hide();
     }
   inputbars[c].show();
-  if (lastchord==0)
+  if (mapmode==0)
   {
    // button3.hide();
     //button5.hide();
@@ -262,7 +263,7 @@ function draw() {
   
   
   button.mousePressed(inputnextchord);
-  button2.mousePressed(lastchord_funct);
+  button2.mousePressed(mapmode_funct);
   button3.mousePressed(shownextchord);
   button_showintervals.mousePressed(funct_showintervals);
   button4.mousePressed(startover);
@@ -273,22 +274,19 @@ function draw() {
 
   
  timeNow=millis();
-  if(lastchord!=1)
-  { u=totalchords;
+  if(mapmode!=1)
+  { 
     chords[c].display_fretboard();
     //chords[totalchords].inputChord();
 
-    if(fullchord==1)
-   { chords[c].display_fullchord();
-   }
-    else
+    
    chords[c].display_inputchord();
    // console.log(c, totalchords);
    chords[c].chordanalyze(); 
      
   }
   else
-    { u=c;
+    {
       chords[c].display_fretboard();
       animation();
       chords[c].chordanalyze();   
@@ -310,7 +308,7 @@ function draw() {
      }
     
 
-     if(ismetronome==1 && lastchord==1){
+     if(ismetronome==1 && mapmode==1){
   
      if (timeNow > nextKlack) {
        if(beats%4==0)
@@ -320,10 +318,9 @@ function draw() {
        prevKlack = timeNow;
        nextKlack = timeNow + 60000/tempoSlider.value();
        beats++;
+       nav=1;   //during transition, chords will change only in forward direction
        if(beats>0)
-       tempo_chord=1;
-       //else
-      // c=0;                 //fixing the bug of random shifting of chord unexpectedly with metronome is in use
+       metro_trans=1;
       
   }
   
@@ -346,12 +343,12 @@ function draw() {
    pop();
   
   
-    if(beats%(4*chords[c].bars)==0 && tempo_chord==1 && timeNow>(prevKlack+30000/tempoSlider.value()))
+    if(beats%(4*chords[c].bars)==0 && metro_trans==1 && timeNow>(prevKlack+30000/tempoSlider.value()))
     {
       amount=0;
       prevc =c;     
       c=(c+1)%(totalchords+1);
-      tempo_chord=0;
+      metro_trans=0;
       console.log(chords[c].bars);
       beats=0;      
 
@@ -362,7 +359,7 @@ function draw() {
    textSize(20);
    colorMode(RGB);
    fill(255,255,255);
-   if(lastchord==1)
+   if(mapmode==1)
    text(`${tempoSlider.value()}bpm`, (xoff+200),(yoff+360));
    text(chords[c].chordname,(100)*x_scale,(250)*y_scale)
    textSize(10);
@@ -394,7 +391,7 @@ function mouseClicked() {
    
   }
   else{
-    if(lastchord==0){     //chords can be edited only in input mode
+    if(mapmode==0){     //chords can be edited only in input mode
     let x=mouseX;
     let y=mouseY;
       if (mouseY>270*y_scale && mouseY<920*y_scale)
@@ -454,7 +451,7 @@ function mouseClicked() {
         } // i loop
       } // within fretboardcanvas 
   
-} //condition for lastchord
+} //condition for mapmode
 } //condition for paintmode
 }
 
@@ -544,7 +541,7 @@ function animation(){
 function shownextchord(){
  
   
-  if(lastchord==1) //we want nav to remain 0 during edit mode
+  if(mapmode==1) //we want nav to remain 0 during edit mode
    nav=1;
 
      amount=0;
@@ -555,7 +552,7 @@ function shownextchord(){
 
 function showpreviouschord()
 {
-   if(lastchord==1)
+   if(mapmode==1)
     nav=-1;
 
      amount=0;
@@ -764,10 +761,10 @@ function transition(tempamount){
   
 
 } 
-function lastchord_funct()
+function mapmode_funct()
 {
-  lastchord=(lastchord+1)%2;
-  if(lastchord==0)
+  mapmode=(mapmode+1)%2;
+  if(mapmode==0)
   ismetronome=0;
   beats=-4;
 
@@ -782,7 +779,7 @@ nav=0;
     chords[temp1].reset_lerp();
     
   }
- if(lastchord==1)
+ if(mapmode==1)
  {
 
  for(temp1=0;temp1<=totalchords;temp1++)
@@ -945,7 +942,7 @@ function keyPressed() {
     if(key=='f')
     fullscreen(1);
   
-  //if (lastchord==1)
+  //if (mapmode==1)
    // {
       if(keyCode==LEFT_ARROW)
       {  showpreviouschord();
@@ -971,7 +968,7 @@ function keyPressed() {
   
      if (keyCode===32)
      {
-       lastchord_funct();
+       mapmode_funct();
        
      }  
 
@@ -982,7 +979,7 @@ function keyPressed() {
 
      if(key=='m')
      {
-       if(lastchord==1)
+       if(mapmode==1)
        togglemetronome();
      }
 
@@ -990,7 +987,7 @@ function keyPressed() {
      showbars=(showbars+1)%2;
 
      if(keyCode==13)
-     {if(lastchord==0)
+     {if(mapmode==0)
       inputnextchord();
      }
 
@@ -1066,7 +1063,7 @@ function startover()
       paintcanvas[i].clear();
       inputbars[i].value(1);
     }
-  lastchord=0;
+  mapmode=0;
   chords.length=0;
   totalchords=0;
   beats=-4;
@@ -1098,8 +1095,8 @@ function stream_mode()
 
 
 function togglemetronome()
-{ tempo_chord=0;                 
-  beats=-4;
+{ metro_trans=0;                 
+  beats=-4;    
   nextKlack = timeNow + 60000/tempoSlider.value();
   ismetronome=(ismetronome+1)%2;
 }

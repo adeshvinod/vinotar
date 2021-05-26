@@ -2,39 +2,11 @@
 //p5.disableFriendlyErrors = true; // disables FES
 let fret_pos=50; //marker to keep track of the fret beginnings and ending
 let orig_width=120; //fretwidth of first fret
-let button;
-let button2;
-let chords=[]
-let lastchord=0;
-let totalchords=0;
-let button3;
-let button4,button5;
-let button_showintervaxls;
-let c=0;
-let show_intervals=0;
-let lerpamount=0 //index for linear interpolation during transition
-let amount=0;
-let prevc=0;
-let t1;
 
-let stream_mode_var=0;
-let fullchord=0; //varible to flag whether you want to display full chord during input stage
-
-let deletenote=0;
-let shownote=1;
-
-var radius;
-var c_canv;
 ht=window.outerHeight;
 wd=window.outerWidth;
-let paintcanvas=[];
-let u=0;
-let paintmode=0;
 
 
-
-wd=window.outerWidth;
-ht=window.outerHeight;
 
 class  fretclass{                                 
     constructor(x,i,j,f_width,f_pos)
