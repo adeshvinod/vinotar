@@ -403,7 +403,7 @@ function mouseClicked() {
                   {
                      if(chords[c].inputnotes[q].x==v.x && chords[c].inputnotes[q].y==v.y) //to check if note is already present, if yes, - note
                      { chords[c].fretobj[i][j].input_chordnote=0;
-                      //chords[c].fretobj[i][j].present=0;
+                      chords[c].fretobj[i][j].present=0;
                        chords[c].inputnotes.splice(q,1); 
                        chords[c].total_chordnotes--; 
 

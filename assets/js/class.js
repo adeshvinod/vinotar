@@ -451,7 +451,7 @@ class  fretclass{
           }
           if(i==c.length-1)
           { this.chordname=assign_notename(this.chordnotes[0])+c[c.length-1];
-           // console.log(" the chord is :"+this.chordname);
+           console.log(" the chord is :"+this.chordname);
             found=1;
             break loop1;
           }
@@ -459,8 +459,9 @@ class  fretclass{
       }
 
       if(found==0)
-      {
-        this.chordname="input valid \n chord";
+      { this.chordname=""; //to prevent infinite loop of note display
+        for(i of this.chordnotes)
+        this.chordname=this.chordname+' '+assign_notename(i);
       }
 
      // console.log(ch_formula)
