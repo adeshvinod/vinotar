@@ -1,14 +1,16 @@
 
-let inputbars=[]; //array of bar-length values of respective chords   
+let chords=[]     //array storing every inputed chord/arpeggio/scale in the progression 
+let totalchords=0; //total chords inputed by user
+let inputbars=[]; // bar-length values of respective chords   
+let paintcanvas=[];  //array of paint canvas, each chord has a corresponding private canvas,navigation is same for canvas and chords
 
-x_scale=0.85*window.outerWidth/1536;    //shifted this here from setup
+
+x_scale=0.85*window.outerWidth/1536; 
 y_scale=x_scale;                // canvas scaling variables so that canvas accomodates to any screen size 
 let xoff=15;       //offset values from x and y axis for buttons (SHOW MAP,<,>,+,-)
 let yoff=600*y_scale;
-let nav=0;        //determines direction of navigation. nav=1(forwards) nav=-1(reverse)
-let chords=[]     //array storing every inputed chord/arpeggio/scale in the progression 
+let nav=0;        // direction of navigation. nav=1(forwards) nav=-1(reverse)
 let mapmode=0;    //when mapmode==1, the fretboard maps all inputed notes across the neck
-let totalchords=0; //total chords inputed by user
 
 let c=0;            //index number of current chord[]
 let prevc=0;        //index number of prev chord, if the current chord is the first chord, prevc will be the last chord inputed(cyclic navigation) 
@@ -21,10 +23,9 @@ let stream_mode_var=0; //toggle green screen as background
 
 let deletenote=0;
 let shownote=1;   //displays note names, C,C#,D etc
-var radius;       //radius of input ellipses
-var c_canv;       //color of paintbrush
 
-let paintcanvas=[];  //array of paint canvas, each chord has a corresponding private canvas,navigation is same for canvas and chords
+var radius;       //radius of paintbrush stroke
+var c_canv;       //color of paintbrush
 let paintmode=0;     //double left click toggles paintmode
 
 let button, button2,button3,button4,button5;
@@ -151,28 +152,23 @@ for(let i=0;i<50;i++)        //creates 50 EMPTY chords initially, so maximum cho
   button8.style('border-radius','12px');
   
 
-  
-
   tempoSlider = createSlider(40, 208, 100);
   tempoSlider.class('slider');
   tempoSlider.position(xoff+130,yoff+380);
   tempoSlider.hide();
   
-
-  //inp.size(200,200);
   
   //PAINT CANVAS
-  for(let i=0;i<50;i++)             //similarly we create 50 paintcanvas and bar-length input bars that correspond to the 50 chords
-   { 
-     inputbars[i]=createInput(1,float);
-    inputbars[i].position(0, 0);
-    inputbars[i].size(30);
-    //inputbars[i].hide();
+for(let i=0;i<50;i++)             //similarly we create 50 paintcanvas and bar-length input bars that correspond to the 50 chords
+{ 
+  inputbars[i]=createInput(1,float);
+  inputbars[i].position(0, 0);
+  inputbars[i].size(30);
      
-    paintcanvas[i]=createGraphics(wd,ht*1.5);
-      paintcanvas[i].slider = createSlider(1, 20, 3);
-    paintcanvas[i].slider.position(wd/1.2,10);
-    paintcanvas[i].slider.hide();
+  paintcanvas[i]=createGraphics(wd,ht*1.5);
+  paintcanvas[i].slider = createSlider(1, 20, 3);
+  paintcanvas[i].slider.position(wd/1.2,10);
+  paintcanvas[i].slider.hide();
   paintcanvas[i].eraser = createButton("clear");
   paintcanvas[i].eraser.mousePressed(changeBG);
   paintcanvas[i].eraser.position(wd/1.2,40);
@@ -180,8 +176,8 @@ for(let i=0;i<50;i++)        //creates 50 EMPTY chords initially, so maximum cho
   paintcanvas[i].eraser.style('border-radius','20%');
   paintcanvas[i].eraser.style('background-color','orange')
   paintcanvas[i].redbutton=createButton(".");
- paintcanvas[i].redbutton.mousePressed(redpaint);
- paintcanvas[i].redbutton.hide();
+  paintcanvas[i].redbutton.mousePressed(redpaint);
+  paintcanvas[i].redbutton.hide();
   paintcanvas[i].redbutton.position(wd/1.06,20);
   paintcanvas[i].redbutton.style('border-radius','50%');
   paintcanvas[i].redbutton.style('background-color','orange')
@@ -196,28 +192,20 @@ for(let i=0;i<50;i++)        //creates 50 EMPTY chords initially, so maximum cho
   paintcanvas[i].whitebutton=createButton(".");
   paintcanvas[i].whitebutton.mousePressed(whitepaint);
   paintcanvas[i].whitebutton.hide();
-   paintcanvas[i].whitebutton.position(wd/1.08,0);
-   paintcanvas[i].whitebutton.style('border-radius','50%');
+  paintcanvas[i].whitebutton.position(wd/1.08,0);
+  paintcanvas[i].whitebutton.style('border-radius','50%');
   paintcanvas[i].whitebutton.style('background-color','white')
   
   paintcanvas[i].checkbox = createCheckbox('Eraser', false);
-    paintcanvas[i].checkbox.position(wd/1.15,40)
-    paintcanvas[i].checkbox.style('color','white')
-    paintcanvas[i].checkbox.hide();
-  /*  paintcanvas[i].checkboxred=createCheckbox('red',false);
-    paintcanvas[i].checkboxred.position(wd/2+50,70);
-    paintcanvas[i].checkboxred.hide();
-    paintcanvas[i].checkboxblue=createCheckbox('blue',false);
-    paintcanvas[i].checkboxblue.position(wd/2-50,70);
-    paintcanvas[i].checkboxblue.hide();
-*/
-  //c_canv = color(255,255,255);
-    colorMode(RGB);
+  paintcanvas[i].checkbox.position(wd/1.15,40)
+  paintcanvas[i].checkbox.style('color','white')
+  paintcanvas[i].checkbox.hide();
+  
+  colorMode(RGB);
     
-    c_canv=color(255,255,255);
-    paintcanvas[i].colorMode(RGB);
-    
-  paintcanvas[i].background(255,255,255,0);
+  c_canv=color(255,255,255);
+  paintcanvas[i].colorMode(RGB);
+  paintcanvas[i].background(255,255,255,0); //alpha value=0 as overlaying paint canvas should be transparent. only strokes are opaque
   
    }
 }
@@ -227,10 +215,9 @@ for(let i=0;i<50;i++)        //creates 50 EMPTY chords initially, so maximum cho
 
 function draw() {
   window.onkeydown = function(e) { 
-    return !(e.keyCode == 32);
-};             //prevent page scrolling when space is pressed, prevents default behaviour
+    return !(e.keyCode == 32); };             //prevent page scrolling when space is pressed, prevents default behaviour
  
-   for(let i=0;i<chords.length;i++) //50 is the number of intial chords
+   for(let i=0;i<chords.length;i++) //50 is the number of intial chords, initally hide all the unnecessary buttons
     {
       paintcanvas[i].slider.hide();
       paintcanvas[i].eraser.hide();
@@ -240,11 +227,10 @@ function draw() {
       paintcanvas[i].whitebutton.hide();
       inputbars[i].hide();
     }
-  inputbars[c].show();
+  inputbars[c].show();  //only show the bar-length input bar for the current chord (c is the index of current chord)
   if (mapmode==0)
   {
-   // button3.hide();
-    //button5.hide();
+  
     button.show();
     button2.show();
     button7.hide();
@@ -274,41 +260,36 @@ function draw() {
 
   
  timeNow=millis();
-  if(mapmode!=1)
-  { 
-    chords[c].display_fretboard();
-    //chords[totalchords].inputChord();
-
-    
+if(mapmode!=1)  //edit mode
+{ 
+   chords[c].display_fretboard(); 
    chords[c].display_inputchord();
-   // console.log(c, totalchords);
    chords[c].chordanalyze(); 
      
-  }
-  else
-    {
-      chords[c].display_fretboard();
-      animation();
-      chords[c].chordanalyze();   
-    }
+}
+else       //map mode
+{
+    chords[c].display_fretboard();
+    mapanimation();
+    chords[c].chordanalyze();   
+}
     chords[c].bars=inputbars[c].value();
-   if(paintmode==1)
-     {
-        paintcanvas[c].slider.show();
+
+
+if(paintmode==1)
+{
+ paintcanvas[c].slider.show();
  paintcanvas[c].eraser.show();
  paintcanvas[c].checkbox.show();
  paintcanvas[c].redbutton.show();
  paintcanvas[c].bluebutton.show();
  paintcanvas[c].whitebutton.show();
- //paintcanvas[c].checkboxred.show();
- //paintcanvas[c].checkboxblue.show();
-  radius = paintcanvas[c].slider.value();
-      // tint(255,255,255,255);
-  image(paintcanvas[c],0,0);
-     }
+ radius = paintcanvas[c].slider.value();
+ image(paintcanvas[c],0,0);
+}
     
 
-     if(ismetronome==1 && mapmode==1){
+if(ismetronome==1 && mapmode==1){  //user can use the metronome only in map mode, not edit mode
   
      if (timeNow > nextKlack) {
        if(beats%4==0)
@@ -320,11 +301,11 @@ function draw() {
        beats++;
        nav=1;   //during transition, chords will change only in forward direction
        if(beats>0)
-       metro_trans=1;
+       metro_trans=1;    //flag to activate transition animation after count in
       
-  }
+     }
   
-  
+    //to display metronome beat number
     push();
     textAlign(CENTER);
     textSize(20);
@@ -336,20 +317,15 @@ function draw() {
     text(4,200*x_scale,200*y_scale);
     else
     text((beats-1)%4+1,200*x_scale,200*y_scale);
-    
-   //text(beats%4,200,200);
-    //text(c,250,200);
-  
-   pop();
+    pop();
   
   
     if(beats%(4*chords[c].bars)==0 && metro_trans==1 && timeNow>(prevKlack+30000/tempoSlider.value()))
-    {
-      amount=0;
+    {               //this ensures transition happens only at the end of the bar
+      amount=0;      
       prevc =c;     
-      c=(c+1)%(totalchords+1);
-      metro_trans=0;
-      console.log(chords[c].bars);
+      c=(c+1)%(totalchords+1); 
+      metro_trans=0;  //reset the flag to 0 everytime, in case beats=-4 again (count in), we dont want this condition to be passed                 
       beats=0;      
 
     }
@@ -359,84 +335,99 @@ function draw() {
    textSize(20);
    colorMode(RGB);
    fill(255,255,255);
-   if(mapmode==1)
-   text(`${tempoSlider.value()}bpm`, (xoff+200),(yoff+360));
-   text(chords[c].chordname,(100)*x_scale,(250)*y_scale)
-   textSize(10);
    noStroke();
-   text("Bar Length",70,20)
+   if(mapmode==1)
+   text(`${tempoSlider.value()}bpm`, (xoff+200),(yoff+360));   //disoplays metronome bpm value above the slider
+   text(chords[c].chordname,(100)*x_scale,(250)*y_scale)     
+   textSize(10);
+   
+   text("Bar Length",70,20)  //label for input bar(bar length input)
   pop();
 
- // console.log(frameRate());
+ 
  if(showbars==1)
- showprogression();
+ showprogression();   //displays the chord progression animation at bottom
 
- //console.log(x_scale,y_scale);
+
 
 }
   
 function mouseClicked() {
- if(paintmode==1)
+ if(paintmode==1)  //mouse click behaviour is different in paint mode and non-paint mode. 
  {
   
    
-    if (paintcanvas[c].checkbox.checked())
+    if (paintcanvas[c].checkbox.checked()) //if eraser is activated
      { 
        paintcanvas[c].erase();
       stampRectangle(255);
       paintcanvas[c].noErase();
      }
-      else 
-    stampRectangle(c_canv);
    
   }
   else{
     if(mapmode==0){     //chords can be edited only in input mode
     let x=mouseX;
     let y=mouseY;
-      if (mouseY>270*y_scale && mouseY<920*y_scale)
+      if (mouseY>270*y_scale && mouseY<920*y_scale)  //to check if mouse is in vicinity of fretboard
       {
        loop1:
-        for (let i=0;i<6;i++)
+        for (let i=0;i<6;i++)  //string number
         {   loop2: 
-            for(let j=0;j<=18;j++)
+            for(let j=0;j<=18;j++) //fret numbr
             { 
               if((x-chords[c].fretobj[i][j].f_pos<chords[c].fretobj[i][j].f_width)&&(abs((y-(300*y_scale+i*50*y_scale)))<10) && ((x-chords[c].fretobj[i][j].f_pos)>0))
-             { //console.log("test passed:"+x,y,i,j) ;
-              // console.log("this.input_chord="+ chords[u].fretobj[i][j].input_chordnote);
-            
+             {                       //conditional to check if the centre of fret is clicked
                if(!keyIsDown(SHIFT)) //deactivated rootnote changing mode
                 {
-               let v= createVector(i,j);
-               loop3:
-               for( let q in chords[c].inputnotes)
-              {
-                 if(chords[c].inputnotes[q].x==v.x && chords[c].inputnotes[q].y==v.y) //to check if note is already present, if yes, - note
-                { chords[c].fretobj[i][j].input_chordnote=0;
-                  chords[c].inputnotes.splice(q,1); 
-                      chords[c].total_chordnotes--; 
+                  let v= createVector(i,j);
+
+                  if(keyIsDown(UP_ARROW))
+                  { for(let m=0;m<6;m++)
+                    {
+                      for(let n=0;n<=18;n++)
+                      {
+                        if(chords[c].fretobj[i][j].note_intval==chords[c].fretobj[m][n].note_intval)
+                        {
+                          chords[c].fretobj[m][n].isdisable=(chords[c].fretobj[m][n].isdisable+1)%2;
+                        }
+                      }
+                    }
+                    
+                  }
+                else
+                {
+                  
+                  loop3:
+                  for( let q in chords[c].inputnotes)
+                  {
+                     if(chords[c].inputnotes[q].x==v.x && chords[c].inputnotes[q].y==v.y) //to check if note is already present, if yes, - note
+                     { chords[c].fretobj[i][j].input_chordnote=0;
+                      //chords[c].fretobj[i][j].present=0;
+                       chords[c].inputnotes.splice(q,1); 
+                       chords[c].total_chordnotes--; 
 
                       for(let r in chords[c].chordnotes)
                       {  
-                        if(chords[c].chordnotes[chords[c].chordnotes.length-r-1]==chords[c].fretobj[i][j].note_intval)
-                        {
+                        if(chords[c].chordnotes[chords[c].chordnotes.length-r-1]==chords[c].fretobj[i][j].note_intval) 
+                        { //we must delete elements in chordnotes[] from the back as the computer treats 0th element as root.otherwise, if user deletes a repeated inputed root, the root note value will change
                           chords[c].chordnotes.splice(chords[c].chordnotes.length-r-1,1); 
-                          break;                    
+                          break;       //break out so that deletion of repeated notes does not affect the original note             
                         }
                     
                       }
                       break loop2;    
-                }
-               }
-               chords[c].inputnotes[chords[c].total_chordnotes]= v;
+                     }
+                  }
                
-               chords[c].fretobj[i][j].input_chordnote=1;
-               //this.fretobj[i][j].display(this.chordnotes[0]);
-               chords[c].chordnotes.push(chords[c].fretobj[i][j].note_intval);
-               chords[c].total_chordnotes++;            
-               //break;
+                  chords[c].inputnotes[chords[c].total_chordnotes]= v;
                
-               //console.log("note inputed"+this.total_chordnotes,this.inputnotes);
+                  chords[c].fretobj[i][j].input_chordnote=1;
+                  chords[c].chordnotes.push(chords[c].fretobj[i][j].note_intval);
+                  chords[c].total_chordnotes++;
+                            
+                 }//when d is not held down
+
                 }//condition for left mouse click
                 else if(keyIsDown(SHIFT)){
                 chords[c].rootchange(chords[c].fretobj[i][j].note_intval);
@@ -452,50 +443,50 @@ function mouseClicked() {
       } // within fretboardcanvas 
   
 } //condition for mapmode
-} //condition for paintmode
+} //condition for paintmode==0
 }
 
 
 
 
 
-function mouseDragged() {
+function mouseDragged() {  //this function is for drawing on paintcanvas
 if(paintmode==1)
 {
 
-  if(!keyIsDown(SHIFT)){
-  if (paintcanvas[c].checkbox.checked()){
+if(!keyIsDown(SHIFT))
+{  //universal paint,holding down shift and drawing ensures the drawing is universal for all canvas and not only for current canvas
+  if(paintcanvas[c].checkbox.checked())
+  {
     paintcanvas[c].erase();
-     paintcanvas[c].rect(mouseX,mouseY,paintcanvas[c].slider.value(),paintcanvas[c].slider.value());
-  paintcanvas[c].noErase();
+    paintcanvas[c].rect(mouseX,mouseY,paintcanvas[c].slider.value(),paintcanvas[c].slider.value());
+    paintcanvas[c].noErase();
   }else{
-    paintcanvas[c].stroke(c_canv)
-  }
- // if (mouseX < 390) {
+      paintcanvas[c].stroke(c_canv)
+    }
     paintcanvas[c].strokeWeight(paintcanvas[c].slider.value());
     paintcanvas[c].line(mouseX, mouseY, pmouseX, pmouseY);
- // }
-   }
+}
 
-   else if(keyIsDown(SHIFT)){
+   else if(keyIsDown(SHIFT))
+   {
      for(let p=0;p<=50;p++)
      {
       if (paintcanvas[p].checkbox.checked()){
         
         paintcanvas[p].erase();
-         paintcanvas[p].rect(mouseX,mouseY,paintcanvas[p].slider.value(),paintcanvas[p].slider.value());
+        paintcanvas[p].rect(mouseX,mouseY,paintcanvas[p].slider.value(),paintcanvas[p].slider.value());
         paintcanvas[p].noErase();
       }else{
         paintcanvas[p].stroke(c_canv)
       }
-     // if (mouseX < 390) {
         paintcanvas[p].strokeWeight(paintcanvas[p].slider.value());
         paintcanvas[p].line(mouseX, mouseY, pmouseX, pmouseY);
-     // }
+    
      }
    }
 
-}
+ }
 }
 
 
@@ -517,9 +508,7 @@ function stampRectangle(c_canv,c_=c){
 
 
 
-function animation(){
-  
- // background(0);
+function mapanimation(){
   
   if(ismetronome==1)
   amount=amount+1/(frameRate()*30/tempoSlider.value());   //incrementing amount in order to fit perfectly between transition from end of last bar to to start of next
@@ -528,7 +517,7 @@ function animation(){
   if(amount>1)
   chords[c].display_fullchord();
   else
-  { //chords[c].display_fullchord();
+  { 
     if(beats>=0 && ismetronome==1)             //to ensure that transition animation does not happen during count in
    transition(amount);
     else if(ismetronome==0)
@@ -541,144 +530,40 @@ function animation(){
 function shownextchord(){
  
   
-  if(mapmode==1) //we want nav to remain 0 during edit mode
+  if(mapmode==1) //we want nav to change only during map mode
    nav=1;
-
-     amount=0;
-      prevc =c;     
-      c=(c+1)%(totalchords+1);
-   // }  
+   amount=0;
+   prevc =c;     
+   c=(c+1)%(totalchords+1);
+   
 }
 
 function showpreviouschord()
 {
    if(mapmode==1)
-    nav=-1;
-
-     amount=0;
-         prevc=c;
-         c=c-1;
-         if(c<0)
-         {c=totalchords;
-         }
-   // }  
+   nav=-1;
+   amount=0;
+   prevc=c;
+   c=c-1;
+   if(c<0)
+   {c=totalchords;
+   }
+   
 }
 
 
 function transition(tempamount){
-  //tempamount=tempamount;
-  //.chords[c].create_fretboard();
+
   
   colorMode(HSB,1);
   fill(60/360,1,1,0.8);
   noStroke();
   let radii=40*x_scale;
-  //if(tempamount<0.03)
-  //{chords[temp1].reset_lerp();//prevent arising bubbles during backward lerp (left motion)
-  //chords[temp2].reset_lerp();
-  //}
+
   for(let i=0;i<6;i++)
     { for(let j=0;j<18;j++)
       {  
         
-         /*if(chords[temp1].fretobj[i][j].present==1)               
-          { if(chords[temp1].fretobj[i][j].present==1&&chords[temp2].fretobj[i][j].present==1)
-          { //constant bubbles
-              let x1=chords[temp2].fretobj[i][j].loc.x;       
-              let x2=chords[temp2].fretobj[i][j].loc.y;   
-              chords[temp2].fretobj[i][j].iscommon=1;
-
-              ellipse(x1,x2,radii,radii);
-              //pop();
-              continue;
-
-          }
-           
-            let v1=createVector(chords[temp1].fretobj[i][j].loc.x,chords[temp1].fretobj[i][j].loc.y);
-            let priority1,priority2,priority3,priority4;//records fret no(k) 
-            let prionum=[]; 
-           prionum.push(5);
-            
-           
-           for (let k=0;k<18;k++)
-              {
-                if (k==j){continue;}
-                if(chords[temp2].fretobj[i][k].present==1)
-                { 
-              
-                    
-                  if(k-j==1 && chords[temp2].fretobj[i][k].iscommon==0)
-                  {priority1=k;               
-                   prionum.push(1);      
-                  }
-                 else if(k-j==-1 && chords[temp2].fretobj[i][k].iscommon==0)
-                 {
-                   priority2=k;                 
-                   prionum.push(2);                   
-                 }
-                 else if(k-j==2 && chords[temp2].fretobj[i][k].iscommon==0)
-                  { priority3=k;               
-                   prionum.push(3)                 
-                  }
-                 else if(k-j==-2 && chords[temp2].fretobj[i][k].iscommon==0)
-                  { priority4=k;                
-                   prionum.push(4);              
-                  }
-                  
-                }
-              }
-           
-           let highpri=min(prionum);  //highest priority( indicated by smallest number)
-           
-           if(highpri==1)
-             {
-               let v2=createVector(chords[temp1].fretobj[i][priority1].loc.x,chords[temp1].fretobj[i][priority1].loc.y);
-               let v3 = p5.Vector.lerp(v1, v2, tempamount);
-               ellipse(v3.x,v3.y,radii,radii);
-               chords[temp2].fretobj[i][priority1].islerpto=1;
-             }
-           else if(highpri==2)
-             {
-               let v2=createVector(chords[temp1].fretobj[i][priority2].loc.x,chords[temp1].fretobj[i][priority2].loc.y);
-               let v3 = p5.Vector.lerp(v1, v2, tempamount);
-               ellipse(v3.x,v3.y,radii,radii);
-               chords[temp2].fretobj[i][priority2].islerpto=1;
-             }
-           else if(highpri==3)
-             {
-               let v2=createVector(chords[temp1].fretobj[i][priority3].loc.x,chords[temp1].fretobj[i][priority3].loc.y);
-               let v3 = p5.Vector.lerp(v1, v2, tempamount);
-               ellipse(v3.x,v3.y,radii,radii);
-               chords[temp2].fretobj[i][priority3].islerpto=1;
-             }
-            else if(highpri==4)
-              {
-                let v2=createVector(chords[temp1].fretobj[i][priority4].loc.x,chords[temp1].fretobj[i][priority4].loc.y);
-               let v3 = p5.Vector.lerp(v1, v2,tempamount);
-               ellipse(v3.x,v3.y,radii,radii);
-               chords[temp2].fretobj[i][priority4].islerpto=1;
-              }
-           else
-             {
-               let loneradii=map(amount,0,1,radii,0);
-               let lonex=chords[temp1].fretobj[i][j].loc.x;
-               let loney=chords[temp1].fretobj[i][j].loc.y;
-               ellipse(lonex,loney,loneradii,loneradii);
-             chords[temp2].fretobj[i][j].islerpto=0;
-             }
-          // console.log("    "+prionumarray)
-           prionum.length=0;
-          }
-
-
-       if((chords[temp2].fretobj[i][j].present==1)&&(chords[temp2].fretobj[i][j].islerpto==0))
-           {
-             let loneradii=map(amount,0,1,0,radii);
-               let lonex=chords[temp2].fretobj[i][j].loc.x;
-               let loney=chords[temp2].fretobj[i][j].loc.y;
-               ellipse(lonex,loney,loneradii,loneradii)
-           }
-           */
 
            if(nav==1)
            {
@@ -763,6 +648,14 @@ function transition(tempamount){
 } 
 function mapmode_funct()
 {
+  if(mapmode==1)
+{
+ for(temp1=0;temp1<=totalchords;temp1++)  //loops through the chords
+  {
+    chords[temp1].reset_lerp();
+    
+  }
+}
   mapmode=(mapmode+1)%2;
   if(mapmode==0)
   ismetronome=0;
@@ -774,11 +667,6 @@ nav=0;
   button.hide()
  // button.show();
 
- for(temp1=0;temp1<=totalchords;temp1++)  //loops through the chords
-  {
-    chords[temp1].reset_lerp();
-    
-  }
  if(mapmode==1)
  {
 
@@ -793,7 +681,7 @@ nav=0;
   for(let i=0;i<6;i++)
     { for(let j=0;j<18;j++)
       {                
-        if(chords[temp1].fretobj[i][j].present==1&&chords[temp2_f].fretobj[i][j].present==1)
+        if(chords[temp1].fretobj[i][j].present==1&&chords[temp2_f].fretobj[i][j].present==1&&chords[temp1].fretobj[i][j].isdisable==0&&chords[temp2_f].fretobj[i][j].isdisable==0)
         { //constant bubbles   
               chords[temp1].fretobj[i][j].iscommon_f=1;
               chords[temp2_f].fretobj[i][j].iscommon_b=1;
@@ -815,7 +703,7 @@ nav=0;
       {  
 
         
-      if(chords[temp1].fretobj[i][j].present==1 &&chords[temp1].fretobj[i][j].iscommon_f==0) //we want all constant nodes to remain untouched 
+      if(chords[temp1].fretobj[i][j].present==1 &&chords[temp1].fretobj[i][j].iscommon_f==0&&chords[temp1].fretobj[i][j].isdisable==0) //we want all constant nodes to remain untouched 
       {
         let priority1,priority2,priority3,priority4;//records fret no(k) 
         let prionum=[]; 
@@ -825,7 +713,7 @@ nav=0;
         {
           if(k==j)continue;
 
-          if(chords[temp2_f].fretobj[i][k].present==1)
+          if(chords[temp2_f].fretobj[i][k].present==1&&chords[temp2_f].fretobj[i][k].isdisable==0)
           {
             if(k-j==1&&chords[temp2_f].fretobj[i][k].iscommon_b==0)
             {priority1=k;               
@@ -924,7 +812,7 @@ nav=0;
     { for(let j=0;j<18;j++)
       {                
 
-        if((chords[temp1].fretobj[i][j].present==1)&&(chords[temp1].fretobj[i][j].islerpto==0))
+        if((chords[temp1].fretobj[i][j].present==1)&&(chords[temp1].fretobj[i][j].islerpto==0)&&chords[temp1].fretobj[i][j].isdisable==0)
         {
           chords[temp1].fretobj[i][j].arise_f=1;
           chords[temp1].fretobj[i][j].collapse_b=1;
@@ -944,7 +832,7 @@ function keyPressed() {
   
   //if (mapmode==1)
    // {
-      if(keyCode==LEFT_ARROW)
+      if(4==LEFT_ARROW)
       {  showpreviouschord();
         
     
@@ -1029,16 +917,16 @@ function inputnextchord()
 function deletechord_global()
 { if(totalchords!=0)
   {//chords[c].deletechord();
-  chords.splice(c,1);
-  paintcanvas[c].slider.hide();
-  paintcanvas[c].eraser.hide();
-  paintcanvas[c].checkbox.hide();
-  paintcanvas[c].redbutton.hide();
-  paintcanvas[c].bluebutton.hide();
-  paintcanvas[c].whitebutton.hide();
-  inputbars[c].hide();
-  paintcanvas.splice(c,1);
-  inputbars.splice(c,1);
+    chords.splice(c,1);
+    paintcanvas[c].slider.hide();
+    paintcanvas[c].eraser.hide();
+    paintcanvas[c].checkbox.hide();
+    paintcanvas[c].redbutton.hide();
+    paintcanvas[c].bluebutton.hide();
+    paintcanvas[c].whitebutton.hide();
+    inputbars[c].hide();
+    paintcanvas.splice(c,1);
+    inputbars.splice(c,1);
   if(c==totalchords)
   {c--;}
   totalchords--;

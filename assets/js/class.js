@@ -1,17 +1,19 @@
 
 //p5.disableFriendlyErrors = true; // disables FES
 let fret_pos=50; //marker to keep track of the fret beginnings and ending
-let orig_width=120; //fretwidth of first fret
+let orig_width=120; //fretwidth of first fret, fret width progressively decreases as fret no. increases
 
 ht=window.outerHeight;
 wd=window.outerWidth;
 
 
+//each fret-string combination on the board is a seperate object, indexed as fretobj[i][j], i=string number(0-5),j=fretnumber(0-18)   
+//each inputed chord/scale/arpeggio is treated as a seperate object containing within it all the fretobj[i][j]
 
-class  fretclass{                                 
+class  fretclass{                     
     constructor(x,i,j,f_width,f_pos)
     {   
-     this.note_intval=x;
+     this.note_intval=x;     //intval stores the note names as integer values to make calculations easier(A=0,A#=1,B=2,C=3,C#=4...etc)
      if (this.note_intval==0)
      this.note='A';
      else if (this.note_intval==1)
@@ -39,15 +41,16 @@ class  fretclass{
 
      
      
-     this.i=i;
-     this.j=j;
-     this.f_width=f_width;
-     this.f_pos=f_pos;
-     this.input_chordnote=0;
+     this.i=i;  //string number
+     this.j=j;  //fret number
+     this.f_width=f_width;  
+     this.f_pos=f_pos;    //x-coordinate position of the fret on the canvas
+     this.input_chordnote=0;  //differentiate the original inputed notes by having white outline around the ellipse
      this.loc=createVector(this.f_pos+this.f_width/2,300*y_scale+this.i*50*y_scale); //location of ellipse
-     this.loc_f=createVector(this.f_pos,300*y_scale+this.i*50*y_scale) //location fret beginning
-     this.present=0;
-      this.islerpfrom=0;       //flag to determine whether given ellipse will lerp or not
+     this.loc_f=createVector(this.f_pos,300*y_scale+this.i*50*y_scale) //location fret beginning, loc_f.x is exact same as f_width
+     this.present=0;          //flag to indicate whether this note is present in the inputed chord during map mode
+    this.isdisable=0;     //if disable==1, ellipse wont participate in transition animation
+     this.islerpfrom=0;       //flag to determine whether given ellipse will lerp or not
       this.islerpto=0;
       this.iscommon_f=0;  //to check if the bubble is common between two consecutive chords
       this.iscommon_b=0;
@@ -101,7 +104,10 @@ class  fretclass{
         
       noStroke();
       
-       alphaval=1;
+      if(this.isdisable==1&&this.present==1)
+      alphaval=0.1;
+      else
+      alphaval=1;
         if(this.note_intval-x==0)
         {fill(0,0,1,alphaval);
           s='R';
@@ -174,9 +180,12 @@ class  fretclass{
           
       } else {noStroke();}
 
+      
+
       if(show_intervals==0)
       {fill(60/360,1,1,alphaval);
       }
+      
 
       ellipse(this.loc.x,this.loc.y,40*x_scale,40*x_scale);
       if(show_intervals==1)
@@ -211,15 +220,14 @@ class  fretclass{
   class chordclass{
     constructor()
     {
-     this.chordnotes=[];
-     this.total_chordnotes=0;
-     this.inputnotes=[];
-     this.fretobj=[];
-     this.create_fretboard();
+     this.chordnotes=[];//this array stores int values of all inputed notes
+     this.inputnotes=[];//this Vector array stores the i,j (string&fret no) values of inputed noted
+     this.total_chordnotes=0; //total number of inputed notes. repeated noted are counted
+     this.fretobj=[];  //2D array indexed by i,j (string,fret no), each element is an object of class fretclass
      this.chordname;
-     this.ch_formula=[];
-     this.bars=1;
-      
+     this.ch_formula=[];  //stores the intervallic formula, represented by int value (0-root,1:b2,2:M2,3:b3...etc)
+     this.bars=1;         //bar length of each chord
+     this.create_fretboard(); 
     }
     create_fretboard(){
     colorMode(RGB);
@@ -341,13 +349,15 @@ class  fretclass{
       {  for(let j=0;j<=18;j++)
          { this.fretobj[i][j].present=0;
             for(let k=0;k<this.total_chordnotes;k++)
-           { if(this.inputnotes[k].x==i && this.inputnotes[k].y==j)
+           { 
+            if(this.fretobj[i][j].note_intval==this.chordnotes[k])
+              this.fretobj[i][j].present=1;
+
+              if(this.inputnotes[k].x==i && this.inputnotes[k].y==j)
             { //this.fretobj[i][j].input_pos();
                
               this.fretobj[i][j].display(this.chordnotes[0],this.fretobj[i][j].loc);
             } 
-            if(this.fretobj[i][j].note_intval==this.chordnotes[k])
-              this.fretobj[i][j].present=1;
             
            }
           
@@ -376,6 +386,8 @@ class  fretclass{
               this.fretobj[i][j].collapse_b=0;
               this.fretobj[i][j].constant_b=0;
               this.fretobj[i][j].noaction_b=1;
+              //if(this.fretobj[i][j].present==)
+              //this.fretobj[i][j].isdisable=0;
             }
         }
     }
