@@ -16,7 +16,8 @@ let c=0;            //index number of current chord[]
 let prevc=0;        //index number of prev chord, if the current chord is the first chord, prevc will be the last chord inputed(cyclic navigation) 
 let show_intervals=0;
 let lerpamount=0    //index for linear interpolation during transition
-let amount=0;       //below threshold value displays transition animation and above threshold displays static map  
+let amount=0;       //below threshold value displays transition animation and above threshold displays static map 
+
 
 let t1;
 let stream_mode_var=0; //toggle green screen as background
@@ -156,6 +157,13 @@ for(let i=0;i<50;i++)        //creates 50 EMPTY chords initially, so maximum cho
   tempoSlider.class('slider');
   tempoSlider.position(xoff+130,yoff+380);
   tempoSlider.hide();
+
+  
+  trans_speed_slider = createSlider(10,43,25);
+  trans_speed_slider.class('slider');
+  trans_speed_slider.position(xoff+130,yoff+300);
+  //trans_speed_slider.hide();
+
   
   
   //PAINT CANVAS
@@ -216,6 +224,12 @@ for(let i=0;i<50;i++)             //similarly we create 50 paintcanvas and bar-l
 function draw() {
   window.onkeydown = function(e) { 
     return !(e.keyCode == 32); };             //prevent page scrolling when space is pressed, prevents default behaviour
+
+    window.addEventListener("keydown", function(e) {
+      if(["Space","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].indexOf(e.code) > -1) {
+          e.preventDefault();
+      }
+  }, false);   //prevent default behavior of arrow keys
  
    for(let i=0;i<chords.length;i++) //50 is the number of intial chords, initally hide all the unnecessary buttons
     {
@@ -338,10 +352,12 @@ if(ismetronome==1 && mapmode==1){  //user can use the metronome only in map mode
    noStroke();
    if(mapmode==1)
    text(`${tempoSlider.value()}bpm`, (xoff+200),(yoff+360));   //disoplays metronome bpm value above the slider
+   
    text(chords[c].chordname,(100)*x_scale,(250)*y_scale)     
    textSize(10);
    
    text("Bar Length",70,20)  //label for input bar(bar length input)
+   text("transition speed",(xoff+80),(yoff+320))
   pop();
 
  
@@ -513,7 +529,7 @@ function mapanimation(){
   if(ismetronome==1)
   amount=amount+1/(frameRate()*30/tempoSlider.value());   //incrementing amount in order to fit perfectly between transition from end of last bar to to start of next
   else 
-  amount=amount+0.025;
+  amount=amount+trans_speed_slider.value()/1000;
   if(amount>1)
   chords[c].display_fullchord();
   else
@@ -832,7 +848,7 @@ function keyPressed() {
   
   //if (mapmode==1)
    // {
-      if(4==LEFT_ARROW)
+      if(keyCode==LEFT_ARROW)
       {  showpreviouschord();
         
     
