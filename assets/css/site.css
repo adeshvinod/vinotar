@@ -198,10 +198,10 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
 }
 .hero-text { display: flex; flex-direction: column; gap: 28px; }
 .hero-title { font-size: clamp(44px, 6vw, 84px); }
-.hero-photo { position: relative; }
+.hero-photo, .teacher-photo { position: relative; }
 /* Fits the first screen; cropped toward the guitarist and crowd, not the sky */
 .hero-photo img { width: 100%; height: min(72vh, 620px); min-height: 360px; object-fit: cover; object-position: 50% 78%; border-radius: 24px; }
-.hero-photo figcaption {
+.hero-photo figcaption, .teacher-photo figcaption {
   position: absolute;
   left: 18px;
   bottom: 18px;
