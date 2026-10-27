@@ -30,7 +30,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..600&family=Inter:wght@400;500;600&display=swap">
-  <link rel="stylesheet" href="assets/css/fretboard-visualiser.css?v=7">
+  <link rel="stylesheet" href="assets/css/fretboard-visualiser.css?v=8">
 
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-CQBNR4ZQDX"></script>
@@ -354,13 +354,20 @@
   </div>
 </div>
 
+<!-- Phones held upright: suggest landscape (bindRotateHint in fretboard-visualiser.js) -->
+<div class="rotate-hint" id="rotateHint" role="status" hidden>
+  <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></svg>
+  <span>Turn your phone sideways to see the whole neck.</span>
+  <button type="button" data-action="dismissRotateHint">OK</button>
+</div>
+
 <!-- Messages from saving and loading -->
 <div class="toast" id="toast" role="status" aria-live="polite" hidden>
   <span id="toastText"></span>
   <button type="button" class="toast-action" id="toastAction" hidden></button>
 </div>
 
-<script src="assets/js/fretboard-visualiser.js?v=8"></script>
+<script src="assets/js/fretboard-visualiser.js?v=9"></script>
 <script src="assets/js/fretboard-session.js?v=7"></script>
 <script src="assets/js/fretboard-tutorial.js?v=7"></script>
 </body>

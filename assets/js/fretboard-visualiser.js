@@ -510,13 +510,22 @@
 
   var audioContext = null;
 
-  /** Lazily create (and resume) the Web Audio context used for the metronome. */
-  function getAudioContext() {
+  /** The Web Audio context for samples and the metronome (created suspended). */
+  function createAudioContext() {
     try {
       if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      if (audioContext.state === 'suspended') audioContext.resume();
     } catch (error) { /* audio unavailable */ }
     return audioContext;
+  }
+
+  /** The context, resumed: browsers only allow this after a tap or key press. */
+  function getAudioContext() {
+    var context = createAudioContext();
+    if (context && context.state !== 'running') {
+      var resuming = context.resume();
+      if (resuming && resuming.catch) resuming.catch(function () { /* not allowed yet */ });
+    }
+    return context;
   }
 
   /** Short sine click: higher pitch on the first beat of a bar. */
@@ -536,8 +545,7 @@
     } catch (error) { /* ignore */ }
   }
 
-  // Map MIDI note number → sample URL. <audio> elements are used rather than
-  // fetch + Web Audio so playback also works from file://.
+  // Map MIDI note number → sample URL.
   var NOTE_OFFSETS = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
   var sampleUrlByMidi = {};
   SAMPLE_NAMES.forEach(function (name) {
@@ -546,16 +554,61 @@
     sampleUrlByMidi[midi] = SAMPLE_FOLDER + name + (SAMPLE_FILE_SUFFIX[name] || '-1-spn') + '.wav';
   });
   var sampleMidiNotes = Object.keys(sampleUrlByMidi).map(Number);
-  var preloadedSamples = {};   // url → <audio>
-  var ringingNotes = [];       // string → <audio> currently sounding on it
+
+  /*
+   * Samples are decoded once into Web Audio buffers and played through
+   * buffer sources: no limit on how many notes can sound (phones cap <audio>
+   * elements, which made strums cut out a few chords into a progression),
+   * and notes start on the audio clock, so strums stay tight.
+   *
+   * The recordings start with 20–140 ms of silence, which made notes late
+   * and strums uneven. Each buffer starts from its first audible sample
+   * instead (minus a few ms to keep the pick attack). The files themselves
+   * are untouched.
+   *
+   * fetch() is blocked on file://, so there the old <audio> path is used.
+   */
+  var SAMPLE_ATTACK_THRESHOLD = 0.05;   // fraction of the sample's peak that counts as "sound"
+  var SAMPLE_ATTACK_LEAD = 0.004;       // s kept before that point
+  var NOTE_RELEASE = 0.03;              // s time constant when a string's note is cut off
+  var sampleBuffers = {};               // midi → { buffer, offset } once decoded
+  var fallbackAudio = {};               // url → <audio> (file:// only)
+  var ringingNotes = [];                // string → { stop(whenSeconds) } for the note sounding on it
 
   function preloadSamples() {
+    var context = createAudioContext();
+    if (!context || !window.fetch || location.protocol === 'file:') {
+      sampleMidiNotes.forEach(function (midi) {
+        var audio = new Audio();
+        audio.preload = 'auto';
+        audio.src = sampleUrlByMidi[midi];
+        fallbackAudio[sampleUrlByMidi[midi]] = audio;
+      });
+      return;
+    }
     sampleMidiNotes.forEach(function (midi) {
-      var audio = new Audio();
-      audio.preload = 'auto';
-      audio.src = sampleUrlByMidi[midi];
-      preloadedSamples[sampleUrlByMidi[midi]] = audio;
+      fetch(sampleUrlByMidi[midi])
+        .then(function (response) { return response.arrayBuffer(); })
+        .then(function (data) {
+          // Callback form: older Safari has no promise version.
+          context.decodeAudioData(data, function (buffer) {
+            sampleBuffers[midi] = { buffer: buffer, offset: attackOffset(buffer) };
+          });
+        })
+        .catch(function () { /* that note falls back to <audio> */ });
     });
+  }
+
+  /** Seconds of near-silence at the start of a sample. */
+  function attackOffset(buffer) {
+    var data = buffer.getChannelData(0);
+    var peak = 0;
+    for (var i = 0; i < data.length; i++) peak = Math.max(peak, Math.abs(data[i]));
+    var threshold = peak * SAMPLE_ATTACK_THRESHOLD;
+    for (i = 0; i < data.length; i++) {
+      if (Math.abs(data[i]) > threshold) return Math.max(0, i / buffer.sampleRate - SAMPLE_ATTACK_LEAD);
+    }
+    return 0;
   }
 
   /**
@@ -567,17 +620,43 @@
     sampleMidiNotes.forEach(function (candidate) {
       if (Math.abs(candidate - midi) < Math.abs(nearest - midi)) nearest = candidate;
     });
+    var rate = Math.pow(2, (midi - nearest) / 12);
+    var volume = Math.min(1, state.volume * 1.4);
+    var context = getAudioContext();
+    var sample = sampleBuffers[nearest];
+
+    if (context && sample) {
+      var when = context.currentTime + (delayMs || 0) / 1000;
+      var source = context.createBufferSource();
+      var gain = context.createGain();
+      source.buffer = sample.buffer;
+      source.playbackRate.value = rate;
+      gain.gain.value = volume;
+      source.connect(gain);
+      gain.connect(context.destination);
+      if (ringingNotes[string]) ringingNotes[string].stop(when);
+      source.start(when, sample.offset);
+      ringingNotes[string] = {
+        stop: function (at) {
+          gain.gain.setTargetAtTime(0, at, NOTE_RELEASE);
+          try { source.stop(at + NOTE_RELEASE * 8); } catch (error) { /* already stopped */ }
+        }
+      };
+      return;
+    }
+
+    // <audio> fallback (file://, or a sample that is still loading)
     var url = sampleUrlByMidi[nearest];
-    var audio = preloadedSamples[url] ? preloadedSamples[url].cloneNode() : new Audio(url);
+    var audio = fallbackAudio[url] ? fallbackAudio[url].cloneNode() : new Audio(url);
     audio.preservesPitch = false;
     audio.mozPreservesPitch = false;
     audio.webkitPreservesPitch = false;
-    audio.playbackRate = Math.pow(2, (midi - nearest) / 12);
-    audio.volume = Math.min(1, state.volume * 1.4);
-
+    audio.playbackRate = rate;
+    audio.volume = volume;
+    audio.addEventListener('ended', function () { releaseAudio(audio); });
     setTimeout(function () {
-      if (ringingNotes[string]) fadeOut(ringingNotes[string]);
-      ringingNotes[string] = audio;
+      if (ringingNotes[string]) ringingNotes[string].stop();
+      ringingNotes[string] = { stop: function () { fadeOut(audio); } };
       audio.play().catch(function () { /* blocked until the user interacts */ });
     }, delayMs || 0);
   }
@@ -586,9 +665,16 @@
     var volume = audio.volume;
     var fade = setInterval(function () {
       volume -= 0.12;
-      if (volume <= 0) { clearInterval(fade); audio.pause(); }
+      if (volume <= 0) { clearInterval(fade); releaseAudio(audio); }
       else audio.volume = volume;
     }, 16);
+  }
+
+  /** Free an <audio> element's media player (phones only allow a few). */
+  function releaseAudio(audio) {
+    audio.pause();
+    audio.removeAttribute('src');
+    audio.load();
   }
 
   /** Strum a chord's entered notes from the low string up, one note per string. */
@@ -1685,32 +1771,66 @@
     setState({ chords: chords, activeIndex: chords.indexOf(moved) });
   }
 
+  /** Long press began on a card (from a mouse/pen or a finger). */
+  function beginCardPress(card, id, x, y) {
+    if (!card || cardDrag) return;
+    cancelCardPress();
+    card.classList.add('is-pressing');
+    cardPress = { card: card, pointerId: id, x: x, y: y };
+    cardPress.timer = setTimeout(startCardDrag, LONG_PRESS_MS);
+  }
+
+  /** Pointer or finger moved: drag, or cancel a press that turned into a swipe. */
+  function trackCardPress(id, x, y, event) {
+    if (cardDrag && cardDrag.pointerId === id) {
+      if (event.cancelable) event.preventDefault();   // touch: keep the page from scrolling
+      moveCardDrag(x, y);
+    } else if (cardPress && cardPress.pointerId === id) {
+      if (Math.hypot(x - cardPress.x, y - cardPress.y) > PRESS_MOVE_TOLERANCE) cancelCardPress();
+    }
+  }
+
+  function finishCardPress(id, cancelled) {
+    if (cardDrag && cardDrag.pointerId === id) endCardDrag(cancelled);
+    else if (cardPress && cardPress.pointerId === id) cancelCardPress();
+  }
+
+  /*
+   * Mouse and pen use pointer events. Fingers use touch events instead: on
+   * phones a pointer drag is handed to page scrolling (pointercancel) before
+   * the long press ends, so the card lit up but never moved. A non-passive
+   * touchmove listener can hold the scroll off once a drag has started.
+   */
   function bindReorderEvents() {
     var list = byId('chordCardList');
+    var TOUCH = 'touch';
+
     list.addEventListener('pointerdown', function (event) {
-      var card = event.target.closest('.chord-card');
-      if (!card || event.button !== 0 || cardDrag) return;
-      cancelCardPress();
-      card.classList.add('is-pressing');
-      cardPress = { card: card, pointerId: event.pointerId, x: event.clientX, y: event.clientY };
-      cardPress.timer = setTimeout(startCardDrag, LONG_PRESS_MS);
+      if (event.pointerType === 'touch' || event.button !== 0) return;
+      beginCardPress(event.target.closest('.chord-card'), event.pointerId, event.clientX, event.clientY);
     });
     window.addEventListener('pointermove', function (event) {
-      if (cardDrag && event.pointerId === cardDrag.pointerId) {
-        moveCardDrag(event.clientX, event.clientY);
-      } else if (cardPress && event.pointerId === cardPress.pointerId) {
-        if (Math.hypot(event.clientX - cardPress.x, event.clientY - cardPress.y) > PRESS_MOVE_TOLERANCE) cancelCardPress();
-      }
+      if (event.pointerType !== 'touch') trackCardPress(event.pointerId, event.clientX, event.clientY, event);
     });
     ['pointerup', 'pointercancel'].forEach(function (type) {
       window.addEventListener(type, function (event) {
-        if (cardDrag && event.pointerId === cardDrag.pointerId) endCardDrag(type === 'pointercancel');
-        else cancelCardPress();
+        if (event.pointerType !== 'touch') finishCardPress(event.pointerId, type === 'pointercancel');
       });
     });
-    // On touch screens, stop the page scrolling while a card is being dragged,
-    // and stop the long press opening the browser's menu.
-    list.addEventListener('touchmove', function (event) { if (cardDrag) event.preventDefault(); }, { passive: false });
+
+    list.addEventListener('touchstart', function (event) {
+      if (event.touches.length !== 1) { finishCardPress(TOUCH, true); return; }
+      var touch = event.touches[0];
+      beginCardPress(event.target.closest('.chord-card'), TOUCH, touch.clientX, touch.clientY);
+    }, { passive: true });
+    document.addEventListener('touchmove', function (event) {
+      var touch = event.touches[0];
+      if (touch) trackCardPress(TOUCH, touch.clientX, touch.clientY, event);
+    }, { passive: false });
+    document.addEventListener('touchend', function () { finishCardPress(TOUCH, false); });
+    document.addEventListener('touchcancel', function () { finishCardPress(TOUCH, true); });
+
+    // Stop the long press opening the browser's menu or selecting text.
     list.addEventListener('contextmenu', function (event) { if (cardPress || cardDrag) event.preventDefault(); });
   }
 
@@ -1955,6 +2075,32 @@
 
     bindPaintEvents();
     bindReorderEvents();
+    bindRotateHint();
+
+    // Phones only let audio start after the person touches the page.
+    ['pointerdown', 'touchend', 'keydown'].forEach(function (type) {
+      window.addEventListener(type, function () { getAudioContext(); }, { passive: true });
+    });
+  }
+
+  /**
+   * On a phone held upright, suggest turning it sideways (the neck is wide).
+   * Dismissed hints stay away for the rest of the visit.
+   */
+  function bindRotateHint() {
+    var hint = byId('rotateHint');
+    var portraitPhone = window.matchMedia('(orientation: portrait) and (max-width: 600px) and (pointer: coarse)');
+    var dismissed = false;
+    try { dismissed = sessionStorage.getItem('fretnoodle.rotateHint') === 'off'; } catch (error) { /* storage unavailable */ }
+    function update() { hint.hidden = dismissed || !portraitPhone.matches; }
+    actions.dismissRotateHint = function () {
+      dismissed = true;
+      try { sessionStorage.setItem('fretnoodle.rotateHint', 'off'); } catch (error) { /* storage unavailable */ }
+      update();
+    };
+    if (portraitPhone.addEventListener) portraitPhone.addEventListener('change', update);
+    else if (portraitPhone.addListener) portraitPhone.addListener(update);   // older Safari
+    update();
   }
 
   /* ========================================================================
