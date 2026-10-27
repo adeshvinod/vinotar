@@ -257,6 +257,8 @@ input[type=range]:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 5px rgba(2
 .brand-dot { width: 7px; height: 7px; margin-top: 6px; border-radius: 50%; background: var(--accent); }
 
 .site-nav { display: flex; flex-wrap: wrap; gap: 4px 28px; font-size: 13px; font-weight: 500; letter-spacing: .01em; }
+.site-header { position: relative; }
+.nav-toggle { display: none; }   /* phones only (see the end of this file) */
 .site-nav a { padding-bottom: 3px; color: #8f8f8f; text-decoration: none; }
 .site-nav a[aria-current=page] { color: #f3f1ea; border-bottom: 1px solid #f3f1ea; }
 
@@ -1206,6 +1208,89 @@ kbd {
 
 @media (max-width: 560px) {
   .settings { grid-template-columns: minmax(0, 1fr); }
+}
+
+/*
+ * Phones, upright or sideways: one compact header row (wordmark, Tutorial
+ * and Session as icons, ☰ menu for the page links), no Stream mode, and
+ * less space above the fretboard. Desktop is unaffected.
+ */
+@media (max-width: 640px), (max-height: 500px) {
+  .site-header { flex-wrap: nowrap; gap: 8px; padding: 12px 0 0; }
+  .header-start { flex: 1; min-width: 0; gap: 10px; }
+  .header-end { gap: 8px; }
+  .brand-word { font-size: 22px; }
+
+  .btn-tutorial,
+  #sessionButton,
+  .nav-toggle {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    min-height: 40px;
+    padding: 0;
+    border: 1px solid #262626;
+    border-radius: 50%;
+    background: transparent;
+    color: #cfcbc2;
+  }
+  .btn-tutorial span:not(.tutorial-new-dot),
+  #sessionButton span:not(.session-saved-dot) { display: none; }
+  #sessionButton .session-saved-dot { position: absolute; top: 5px; right: 5px; }
+  #sessionButton { position: relative; }
+  [data-action=toggleStreamMode] { display: none; }
+
+  .site-nav {
+    position: absolute;
+    z-index: 40;
+    top: calc(100% + 10px);
+    right: 0;
+    display: none;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 210px;
+    padding: 8px;
+    border: 1px solid #262626;
+    border-radius: 18px;
+    background: #070707;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, .6);
+    font-size: 16px;
+  }
+  .site-nav.is-open { display: flex; }
+  .site-nav a { padding: 12px 14px; border-radius: 12px; }
+  .site-nav a[aria-current=page] { border-bottom: 0; background: #141414; }
+
+  .hero { gap: 16px; padding: 18px 0 16px; }
+  .hero-main { gap: 12px; }
+  .chord-name { font-size: 60px; }
+  .map-bar { gap: 12px; padding: 12px 0; }
+}
+
+/* Phones held sideways (short screens): one slim row above the board, and
+   the board scaled so the whole neck fits the width. zoom keeps clicks,
+   painting and dot positions consistent (it scales layout, not just pixels). */
+@media (max-height: 500px) {
+  .site-header { padding-top: 8px; }
+  .hero { flex-wrap: nowrap; align-items: center; padding: 8px 0; }
+  .hero-main { flex-direction: row; align-items: center; gap: 16px; }
+  .hero-main .eyebrow { display: none; }
+  .chord-name { font-size: 44px; white-space: nowrap; }
+  .tone-chip { padding: 4px 10px 4px 5px; gap: 6px; }
+  .hero-transport { gap: 0; }
+  .transport-buttons { gap: 8px; }
+  .btn-circle { width: 36px; height: 36px; }
+  .btn-play { width: 48px; height: 48px; }
+  .meter { display: none; }
+  .map-bar { padding: 0 0 6px; border-top: 0; }
+  .map-bar-text-group { display: none; }
+  .map-bar-controls { width: 100%; justify-content: flex-end; }
+  .full-map-switch { min-height: 40px; padding-left: 16px; font-size: 14px; }
+  .map-bar-controls .btn-pill { min-height: 40px; }
+  .fretboard-scroll { zoom: .62; }
+}
+@media (max-height: 500px) and (max-width: 760px) {
+  .fretboard-scroll { zoom: .56; }   /* small phones: the whole neck still fits */
 }
 
 @media (max-width: 640px) {
