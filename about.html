@@ -2,8 +2,8 @@
 <!--
   Fretnoodle — About
 
-  What Fretnoodle is: the fretboard visualiser, the upcoming Fretboard King
-  game, and the person who makes them.
+  What Fretnoodle is: the fretboard visualiser, ear training, the upcoming
+  Fretboard King game, and the person who makes them.
 
   Styles: assets/css/site.css · Script: assets/js/site.js
 -->
@@ -12,13 +12,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>About · Fretnoodle</title>
-  <meta name="description" content="Fretnoodle makes apps and games for learning the guitar neck: the free fretboard visualiser and Fretboard King, a game for iOS and Android. Made by guitarist Strangeloop.">
+  <meta name="description" content="Fretnoodle makes apps and games for learning the guitar neck: the free fretboard visualiser, ear training that listens to your guitar, and Fretboard King, a game for iOS and Android. Made by guitarist Strangeloop.">
   <link rel="icon" type="image/x-icon" href="favicon.ico?v=2">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..600&family=Inter:wght@400;500;600&display=swap">
-  <link rel="stylesheet" href="assets/css/site.css?v=15">
+  <link rel="stylesheet" href="assets/css/site.css?v=24">
 
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-CQBNR4ZQDX"></script>
@@ -39,6 +39,7 @@
     </button>
     <nav class="site-nav" id="siteNav" aria-label="Main">
       <a href="index.html">Visualiser</a>
+      <a href="ear-training.html">Ear training</a>
       <a href="lessons.html">Lessons</a>
       <a href="fretboard-king.html">Fretboard King</a>
       <a href="about.html" aria-current="page">About</a>
@@ -73,6 +74,36 @@
           </div>
         </div>
         <div class="mini-neck" data-root="9" data-intervals="0,3,7,10" data-frets="12" data-label="Every A minor 7 chord tone across the first 12 frets"></div>
+      </div>
+    </section>
+
+    <!-- Ear training ---------------------------------------------------- -->
+    <section class="section" aria-labelledby="earTitle">
+      <div class="panel product">
+        <div class="product-text">
+          <span class="badge">Free · uses your microphone</span>
+          <h3 id="earTitle">Ear training</h3>
+          <p>I play a note or a short melody. You find it on your guitar, and the app listens.</p>
+          <ul class="feature-list">
+            <li>Hears your guitar through the mic, no cables</li>
+            <li>Helps when you’re stuck: slower, just this note, then where it is</li>
+            <li>Lights up the answer on a fretboard or a keyboard</li>
+            <li>Feedback on your speed and weak areas</li>
+          </ul>
+          <div class="button-row">
+            <a class="btn btn-primary" href="ear-training.html">Start ear training</a>
+          </div>
+        </div>
+        <div class="ear-preview" aria-hidden="true">
+          <span class="eyebrow">Level 3 · Three-note melodies</span>
+          <div class="ear-headline display">Find note 3 of 3</div>
+          <div class="ear-slots">
+            <div class="ear-slot is-found"><span>E</span><small>2.1 s</small></div>
+            <div class="ear-slot is-found"><span>G</span><small>3.4 s</small></div>
+            <div class="ear-slot is-current"><span>?</span><small></small></div>
+          </div>
+          <div class="ear-preview-live"><span class="eyebrow">You’re playing</span><b>A3</b></div>
+        </div>
       </div>
     </section>
 
@@ -120,6 +151,7 @@
     <a class="brand" href="index.html"><span class="brand-word">fretnoodle</span><span class="brand-dot" aria-hidden="true"></span></a>
     <nav aria-label="Footer">
       <a href="index.html">Visualiser</a>
+      <a href="ear-training.html">Ear training</a>
       <a href="lessons.html">Lessons</a>
       <a href="fretboard-king.html">Fretboard King</a>
       <a href="about.html">About</a>

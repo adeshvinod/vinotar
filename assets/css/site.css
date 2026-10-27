@@ -1,5 +1,5 @@
 /*
- * Fretnoodle — site pages (lessons.html, about.html)
+ * Fretnoodle — site pages (lessons, about, fretboard-king, ear-training)
  *
  * Same look as the visualiser (assets/css/fretboard-visualiser.css): black
  * background, Fraunces headings, Inter text, one yellow accent, hairline
@@ -14,7 +14,8 @@
  *   6. About page
  *   7. Mini fretboard graphic
  *   8. Fretboard King page (game look: navy, coral, teal, Lilita One)
- *   9. Responsive
+ *   9. Ear training page
+ *  10. Responsive
  */
 
 /* 1. Tokens and base ------------------------------------------------------ */
@@ -399,6 +400,11 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
 .king-shot:hover { transform: translateY(-4px); }
 .king-shot img { width: 100%; aspect-ratio: 924 / 540; }
 
+.ear-preview { display: flex; flex-direction: column; gap: 18px; padding: 28px; border: 1px solid var(--line); border-radius: 18px; background: #050505; }
+.ear-preview .ear-headline { font-size: clamp(30px, 3.4vw, 44px); }
+.ear-preview-live { display: flex; align-items: baseline; gap: 14px; padding-top: 16px; border-top: 1px solid var(--line); }
+.ear-preview-live b { font: 400 36px Fraunces, Georgia, serif; color: var(--ink); }
+
 .creator { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 40px; align-items: center; padding: clamp(28px, 5vw, 48px); }
 .creator img { width: 220px; aspect-ratio: 1; object-fit: cover; object-position: 50% 25%; border-radius: 50%; }
 .creator-text { display: flex; flex-direction: column; gap: 16px; }
@@ -656,7 +662,209 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
 }
 .k-cta .k-stores, .k-cta .button-row { justify-content: center; }
 
-/* 9. Responsive ----------------------------------------------------------- */
+/* 9. Ear training page --------------------------------------------------- */
+
+.ear-intro { display: flex; flex-direction: column; gap: 18px; max-width: 760px; padding: clamp(32px, 6vw, 72px) 0 36px; }
+.ear-title { font-size: clamp(48px, 7vw, 92px); }
+
+.ear-panel { display: flex; flex-direction: column; gap: 28px; padding: clamp(24px, 4vw, 44px); }
+
+.ear-steps { display: flex; flex-wrap: wrap; gap: 12px 32px; margin: 0; padding: 0; list-style: none; color: var(--soft); }
+.ear-steps li { display: flex; align-items: center; gap: 12px; }
+.ear-steps span {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--accent);
+  border-radius: 50%;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ear-settings { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 20px 36px; }
+.ear-setting { display: flex; flex-direction: column; gap: 10px; }
+.ear-segmented { display: flex; flex-wrap: wrap; gap: 6px; }
+.ear-segmented button {
+  min-width: 44px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--soft);
+  font: 400 16px Fraunces, Georgia, serif;
+  cursor: pointer;
+}
+.ear-segmented button[aria-pressed=true] { border-color: var(--ink); background: var(--ink); color: #0a0a0a; }
+
+.ear-switch {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 40px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--soft);
+  font: 500 14px Inter, sans-serif;
+  cursor: pointer;
+}
+.ear-switch-track { position: relative; width: 42px; height: 24px; border-radius: 999px; background: var(--line-strong); transition: background 200ms; }
+.ear-switch-track span { position: absolute; top: 4px; left: 4px; width: 16px; height: 16px; border-radius: 50%; background: #9a968d; transition: transform 200ms, background 200ms; }
+.ear-switch[aria-checked=true] .ear-switch-track { background: var(--accent); }
+.ear-switch[aria-checked=true] .ear-switch-track span { background: #0a0a0a; transform: translateX(18px); }
+
+.ear-start-row { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
+.ear-calibrating { margin: 0; color: var(--soft); }
+.ear-error { margin: 0; padding: 12px 16px; border: 1px solid #5a2a2a; border-radius: 12px; color: #f0b4b4; }
+
+/* Live input: note heard, tuning needle, level, and whether the app is listening */
+.ear-live {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas: "label label" "note tuning" "note level" "status status" "tip tip";
+  align-items: center;
+  gap: 8px 20px;
+  max-width: 460px;
+  padding: 18px 22px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #050505;
+  transition: opacity 200ms;
+}
+.ear-live.is-paused { opacity: .45; }
+.ear-live-label { grid-area: label; font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.ear-live-note { grid-area: note; min-width: 96px; font: 400 52px/1 Fraunces, Georgia, serif; letter-spacing: -.02em; }
+.ear-tuning { grid-area: tuning; position: relative; height: 18px; border-radius: 9px; background: linear-gradient(90deg, #1a1a1a, #2b2b2b 46%, var(--accent) 50%, #2b2b2b 54%, #1a1a1a); }
+.ear-needle { position: absolute; top: -3px; left: 50%; width: 3px; height: 24px; margin-left: -1.5px; border-radius: 2px; background: var(--ink); transition: left 90ms linear; }
+.ear-level { grid-area: level; height: 6px; overflow: hidden; border-radius: 3px; background: #1a1a1a; }
+.ear-level i { display: block; width: 0; height: 100%; background: var(--accent); transition: width 60ms linear; }
+.ear-live-status { grid-area: status; font-size: 13px; color: var(--soft); }
+.ear-live-tip { grid-area: tip; font-size: 12px; color: var(--muted); }
+
+/* Fretboard / keyboard: found notes, clues on Help me (see section 8 of ear-trainer.js) */
+.ear-visual { display: flex; flex-direction: column; gap: 14px; padding-top: 22px; border-top: 1px solid var(--line); }
+.ear-visual-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.ear-board { overflow-x: auto; scrollbar-width: thin; }
+.ear-board svg { display: block; width: 100%; min-width: 620px; height: auto; overflow: visible; }   /* phones scroll sideways, like the visualiser */
+.ear-board-label { font: 600 13px Inter, sans-serif; fill: var(--muted); }
+.ear-board-number { font: 400 15px Fraunces, Georgia, serif; fill: var(--muted); }
+
+.ear-dot circle { fill: var(--accent); }
+.ear-dot text { font: 700 13px Fraunces, Georgia, serif; fill: #0a0a0a; }
+.ear-dot.is-latest circle { animation: ear-dot-pop 600ms cubic-bezier(.2, .9, .25, 1.3); transform-box: fill-box; transform-origin: center; filter: drop-shadow(0 0 8px rgba(255, 240, 0, .7)); }
+.ear-dot.is-reveal circle { fill: rgba(255, 240, 0, .12); stroke: var(--accent); stroke-width: 2.5; stroke-dasharray: 5 4; animation: ear-dot-breathe 1.4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.ear-dot.is-reveal text { fill: var(--accent); }
+.ear-dot.is-answer circle { fill: transparent; stroke: var(--soft); stroke-width: 2; }
+.ear-dot.is-answer text { fill: var(--soft); }
+.ear-clue-zone { fill: rgba(255, 240, 0, .07); stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 6 5; animation: ear-zone-in 400ms ease-out; }
+.ear-clue-string { fill: rgba(255, 240, 0, .28); filter: drop-shadow(0 0 8px rgba(255, 240, 0, .5)); animation: ear-zone-in 400ms ease-out; }
+@keyframes ear-dot-pop { from { transform: scale(.3); } }
+@keyframes ear-dot-breathe { 50% { transform: scale(1.15); } }
+@keyframes ear-zone-in { from { opacity: 0; } }
+
+.ear-key { fill: #e9e5dc; stroke: #000; stroke-width: 1; transition: fill 200ms; }
+.ear-key.is-black { fill: #161616; stroke: #2b2b2b; }
+.ear-key.is-found, .ear-key.is-latest { fill: var(--accent); }
+.ear-key.is-latest { filter: drop-shadow(0 0 10px rgba(255, 240, 0, .7)); }
+.ear-key.is-reveal { fill: #fff8a0; stroke: var(--accent); stroke-width: 3; stroke-dasharray: 6 4; }
+.ear-key.is-answer { fill: #bdb8ad; }
+.ear-key.is-clue { fill: #f4ec9c; }
+.ear-key.is-black.is-clue { fill: #5c5622; }
+.ear-key-label { font: 700 15px Fraunces, Georgia, serif; fill: #8f8f8f; }
+.ear-key-label.is-lit { fill: #0a0a0a; }
+.is-black + .ear-key-label.is-lit { fill: #0a0a0a; }
+
+/* Game: melody on the left, what the app hears on the right (stacks on phones) */
+#earGame:not([hidden]) {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr);
+  grid-template-areas: "bar bar" "feedback feedback" "headline live" "slots live" "message live" "controls live" "visual visual";
+  align-items: start;
+  gap: 24px 40px;
+}
+#earGame .ear-bar { grid-area: bar; }
+#earGame .ear-headline { grid-area: headline; }
+#earGame .ear-slots { grid-area: slots; }
+#earGame .ear-message { grid-area: message; }
+#earGame .ear-live { grid-area: live; align-self: center; max-width: none; }
+#earGame .ear-controls { grid-area: controls; }
+#earGame .ear-visual { grid-area: visual; }
+#earGame .ear-feedback { grid-area: feedback; }
+.ear-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+.ear-bar .ear-feedback-button { margin-left: auto; }
+.ear-bar .ear-feedback-button[aria-expanded=true] { border-color: var(--accent); color: var(--accent); }
+
+/* Feedback panel */
+.ear-feedback { display: flex; flex-direction: column; gap: 22px; padding: 24px; border: 1px solid var(--line-strong); border-radius: 16px; background: #050505; animation: ear-zone-in 250ms ease-out; }
+#earFeedbackBody { display: flex; flex-direction: column; gap: 24px; }
+.ear-feedback-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.ear-feedback-title { margin: 0; font: 400 30px Fraunces, Georgia, serif; letter-spacing: -.02em; }
+.ear-feedback-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: var(--line); }
+.ear-feedback-tiles div { display: flex; flex-direction: column; gap: 6px; padding: 18px 20px; background: #000; }
+.ear-feedback-tiles b { font: 400 40px/1 Fraunces, Georgia, serif; letter-spacing: -.02em; color: var(--accent); }
+.ear-feedback-tiles span { font-size: 13px; color: var(--soft); }
+.ear-feedback-section { display: flex; flex-direction: column; gap: 10px; }
+.ear-feedback-list { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.ear-feedback-list li { display: flex; flex-direction: column; gap: 2px; padding: 12px 16px; border-left: 3px solid var(--line-strong); border-radius: 4px; background: #0a0a0a; font-size: 14px; color: var(--soft); }
+.ear-feedback-list strong { font: 400 20px Fraunces, Georgia, serif; color: var(--ink); }
+.ear-feedback-list.is-weak li { border-left-color: #e8846a; }
+.ear-feedback-list.is-strong li { border-left-color: var(--accent); }
+.ear-feedback-list.is-pattern li { border-left-color: var(--muted); }
+.ear-feedback-empty { margin: 0; color: var(--soft); }
+.ear-link { padding: 0; border: 0; background: none; color: var(--muted); font: inherit; text-decoration: underline; cursor: pointer; }
+.ear-link:hover { color: var(--ink); }
+.ear-headline { font-size: clamp(40px, 6vw, 72px); }
+
+.ear-slots { display: flex; flex-wrap: wrap; gap: 16px; }
+.ear-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 96px;
+  height: 96px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 50%;
+  color: var(--muted);
+  transition: background 200ms, border-color 200ms, color 200ms;
+}
+.ear-slot span { font: 400 34px/1 Fraunces, Georgia, serif; }
+.ear-slot small { min-height: 14px; font-size: 12px; }
+.ear-slot.is-current { border-color: var(--accent); color: var(--ink); animation: ear-pulse 1.6s ease-in-out infinite; }
+.ear-slot.is-found { border-color: var(--accent); background: var(--accent); color: #0a0a0a; }
+.ear-slot.is-revealed { border-style: dashed; color: var(--accent); }
+.ear-slot.is-missed { border-style: dashed; color: var(--soft); }
+.ear-slot.is-playing { animation: ear-play 500ms ease-out; }
+@keyframes ear-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 240, 0, 0); }
+  50%      { box-shadow: 0 0 0 6px rgba(255, 240, 0, .12), 0 0 30px rgba(255, 240, 0, .3); }
+}
+@keyframes ear-play {
+  0%   { transform: scale(1.12); box-shadow: 0 0 40px rgba(255, 240, 0, .55); border-color: var(--accent); }
+  100% { transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) { .ear-slot.is-current, .ear-slot.is-playing { animation: none; } }
+
+.ear-message { min-height: 28px; margin: 0; font-size: 19px; color: var(--soft); }
+.ear-message.is-good { color: var(--accent); }
+.ear-message.is-nudge { color: var(--ink); }
+
+.ear-controls { display: flex; flex-wrap: wrap; gap: 10px; }
+.ear-controls .btn:disabled { opacity: .4; cursor: default; }
+.ear-controls kbd {
+  padding: 2px 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: 5px;
+  color: var(--muted);
+  font: 600 11px Inter, sans-serif;
+}
+
+/* 10. Responsive ---------------------------------------------------------- */
 
 @media (max-width: 960px) {
   .hero, .teacher, .product, .visit { grid-template-columns: minmax(0, 1fr); }
@@ -666,6 +874,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
   .tracks { grid-template-columns: minmax(0, 1fr); }
   .videos.is-three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .visit-map { border-left: 0; border-top: 1px solid var(--line); }
+  #earGame:not([hidden]) { grid-template-columns: minmax(0, 1fr); grid-template-areas: "bar" "feedback" "headline" "slots" "message" "live" "controls" "visual"; gap: 20px; }
   .k-hero, .k-play { grid-template-columns: minmax(0, 1fr); }
   .k-modes { grid-template-columns: minmax(0, 1fr); }
   .k-screens { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -760,6 +969,36 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
   .creator img { width: 160px; }
   .site-nav { gap: 4px 20px; }
   .lead { font-size: 17px; }
+  .ear-slot { width: 72px; height: 72px; }
+  .ear-slot span { font-size: 26px; }
+  .ear-live-note { min-width: 72px; font-size: 40px; }
+  .ear-controls kbd { display: none; }
+  .ear-feedback-tiles { grid-template-columns: minmax(0, 1fr); }
+  .ear-feedback { padding: 18px; }
+
+  /* Ear training on a phone: compact setup, and while playing the game fills the screen */
+  .ear-intro { gap: 10px; padding: 20px 0 18px; }
+  .ear-title { font-size: 40px; }
+  .page-ear .lead { font-size: 15px; }
+  .ear-panel { gap: 20px; padding: 18px 16px; }
+  .ear-steps { flex-direction: column; gap: 10px; font-size: 14px; }
+  .ear-bar { flex-wrap: nowrap; gap: 6px; }
+  .ear-bar .chip { padding: 6px 10px; font-size: 12px; white-space: nowrap; }
+  .ear-bar .btn-small { min-height: 34px; padding: 0 12px; font-size: 12px; }
+  .ear-settings-button span { display: none; }
+  .ear-settings-button { width: 34px; padding: 0 !important; }
+  .ear-level-name { display: none; }
+  .ear-headline { font-size: 34px; }
+  .ear-slots { gap: 10px; }
+  .ear-slot { width: 64px; height: 64px; }
+  .ear-slot span { font-size: 24px; }
+  .ear-slot small { font-size: 11px; min-height: 12px; }
+  .ear-message { min-height: 22px; font-size: 15px; }
+  .ear-live { padding: 14px 16px; gap: 6px 16px; }
+  .ear-live-note { min-width: 64px; font-size: 34px; }
+  .ear-live-tip { display: none; }
+  .ear-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .ear-controls .btn { min-height: 46px; padding: 0 12px; }
   .k-section { padding-top: 88px; }
   .k-screens { grid-template-columns: minmax(0, 1fr); }
   .k-crew { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -768,4 +1007,22 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
   .k-hud-labels { font-size: 12px; }
   .k-device-character { left: -8px; }
   .k-floor { left: -20px; }
+}
+
+/* Phones (upright or sideways): the intro steps aside while a game runs */
+@media (max-width: 640px), (max-height: 500px) {
+  .is-ear-playing .ear-intro { display: none; }
+  .is-ear-playing .ear-panel { margin-top: 12px; }
+}
+
+/* Phones held sideways: melody beside what the app hears, like desktop */
+@media (max-height: 500px) and (min-width: 641px) {
+  #earGame:not([hidden]) {
+    grid-template-columns: minmax(0, 1.4fr) minmax(240px, 1fr);
+    grid-template-areas: "bar bar" "feedback feedback" "headline live" "slots live" "message live" "controls live" "visual visual";
+    gap: 14px 28px;
+  }
+  .ear-headline { font-size: 32px; }
+  .ear-slot { width: 64px; height: 64px; }
+  .ear-panel { padding: 18px 20px; }
 }

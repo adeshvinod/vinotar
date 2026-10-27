@@ -1,0 +1,177 @@
+<!doctype html>
+<!--
+  Fretnoodle — Ear training
+
+  The app plays a note or a short melody; the student finds it on their own
+  guitar; the microphone hears what they play, and the app helps when they
+  get stuck (direction, slower, just that note, then where it is).
+
+  Styles: assets/css/site.css (section 9)
+  Logic:  assets/js/pitch-detector.js (hearing notes)
+          assets/js/ear-trainer.js (sound, rounds, help, display)
+  The microphone needs https (or localhost).
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ear training · Fretnoodle</title>
+  <meta name="description" content="Ear training on your own guitar: Fretnoodle plays a note or melody, listens while you find it, and helps when you're stuck.">
+  <link rel="icon" type="image/x-icon" href="favicon.ico?v=2">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..600&family=Inter:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="assets/css/site.css?v=24">
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-CQBNR4ZQDX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-CQBNR4ZQDX');
+  </script>
+</head>
+<body class="page-ear">
+<div class="container">
+
+  <header class="site-header">
+    <a class="brand" href="index.html"><span class="brand-word">fretnoodle</span><span class="brand-dot" aria-hidden="true"></span></a>
+    <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="siteNav" aria-label="Menu">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+    <nav class="site-nav" id="siteNav" aria-label="Main">
+      <a href="index.html">Visualiser</a>
+      <a href="ear-training.html" aria-current="page">Ear training</a>
+      <a href="lessons.html">Lessons</a>
+      <a href="fretboard-king.html">Fretboard King</a>
+      <a href="about.html">About</a>
+    </nav>
+    <a class="btn btn-primary btn-small header-cta" href="lessons.html">Lessons</a>
+  </header>
+
+  <main>
+
+    <section class="ear-intro" aria-labelledby="earTitle">
+      <p class="eyebrow">Ear training</p>
+      <h1 class="display ear-title" id="earTitle">Hear it. <i>Find it.</i></h1>
+      <p class="lead">I play a note or a short melody. You find it on your guitar. I listen, and help when you’re stuck.</p>
+    </section>
+
+    <!-- Setup: microphone, room check, settings ---------------------------- -->
+    <section class="panel ear-panel" id="earSetup" aria-label="Set up">
+      <ol class="ear-steps">
+        <li><span>1</span>Tune your guitar.</li>
+        <li><span>2</span>Put your laptop or phone close to the guitar’s sound hole.</li>
+        <li><span>3</span>Turn on the microphone.</li>
+        <li><span>4</span>Play any note so I can hear you.</li>
+      </ol>
+
+      <div class="ear-settings">
+        <div class="ear-setting">
+          <span class="eyebrow">Key</span>
+          <div class="ear-segmented" id="earKeys" role="group" aria-label="Key"></div>
+        </div>
+        <div class="ear-setting">
+          <span class="eyebrow">Start with</span>
+          <div class="ear-segmented" id="earLevels" role="group" aria-label="Melody length"></div>
+        </div>
+        <button type="button" class="ear-switch" id="earOctave" role="switch" aria-checked="false">
+          <span>Exact octave</span>
+          <span class="ear-switch-track" aria-hidden="true"><span></span></span>
+        </button>
+      </div>
+
+      <div class="ear-start-row">
+        <button type="button" class="btn btn-primary" id="earMicButton">Turn on microphone</button>
+        <p class="ear-calibrating" id="earCalibrating" hidden>Checking the room. Stay quiet for a second…</p>
+        <button type="button" class="btn btn-primary" id="earStart" hidden>Start</button>
+      </div>
+      <p class="ear-error" id="earError" role="alert" hidden></p>
+
+      <div class="ear-live" id="earCheck" hidden>
+        <span class="ear-live-label" id="earCheckResult">Play any note</span>
+        <span class="ear-live-note">—</span>
+        <span class="ear-tuning" aria-hidden="true"><i class="ear-needle"></i></span>
+        <span class="ear-level" aria-hidden="true"><i></i></span>
+        <span class="ear-live-status">Listening…</span>
+      </div>
+
+      <p class="hint">Headphones help, but aren’t needed: I stop listening while I play. Works in Chrome, Safari and Firefox.</p>
+    </section>
+
+    <!-- Game ---------------------------------------------------------------- -->
+    <section class="panel ear-panel" id="earGame" aria-label="Ear training game" hidden>
+      <div class="ear-bar">
+        <span class="chip" id="earLevel"></span>
+        <span class="chip" id="earKey"></span>
+        <button type="button" class="btn btn-small ear-feedback-button" id="earFeedbackButton" aria-expanded="false" aria-controls="earFeedback">Feedback</button>
+        <button type="button" class="btn btn-small ear-settings-button" id="earSettings" aria-label="Settings">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+          <span>Settings</span>
+        </button>
+      </div>
+
+      <!-- Averages and weak areas from the student's history (section 9 of ear-trainer.js) -->
+      <div class="ear-feedback" id="earFeedback" hidden>
+        <div class="ear-feedback-head">
+          <h3 class="ear-feedback-title">Your feedback</h3>
+          <button type="button" class="btn btn-small" id="earFeedbackClose">Close</button>
+        </div>
+        <div id="earFeedbackBody"></div>
+      </div>
+
+      <h2 class="display ear-headline" id="earHeadline" aria-live="polite">Listen…</h2>
+      <div class="ear-slots" id="earSlots"></div>
+      <p class="ear-message" id="earMessage" aria-live="polite"></p>
+
+      <div class="ear-live" id="earLive">
+        <span class="ear-live-label">You’re playing</span>
+        <span class="ear-live-note">—</span>
+        <span class="ear-tuning" aria-hidden="true"><i class="ear-needle"></i></span>
+        <span class="ear-level" aria-hidden="true"><i></i></span>
+        <span class="ear-live-status">Listening…</span>
+        <span class="ear-live-tip">Keep your device close to the sound hole.</span>
+      </div>
+
+      <div class="ear-controls">
+        <button type="button" class="btn" id="earReplay">Play again <kbd>Space</kbd></button>
+        <button type="button" class="btn" id="earSlower">Slower</button>
+        <button type="button" class="btn" id="earHint">Help me <kbd>H</kbd></button>
+        <button type="button" class="btn" id="earNext">Skip</button>
+      </div>
+
+      <!-- Where the notes are: lights up found notes, gives clues on Help me -->
+      <div class="ear-visual">
+        <div class="ear-visual-head">
+          <span class="eyebrow" id="earVisualLabel">On the neck</span>
+          <div class="ear-segmented" id="earView" role="group" aria-label="Show on">
+            <button type="button" data-view="fretboard" aria-pressed="true">Fretboard</button>
+            <button type="button" data-view="keyboard" aria-pressed="false">Keyboard</button>
+          </div>
+        </div>
+        <div class="ear-board" id="earBoard"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <a class="brand" href="index.html"><span class="brand-word">fretnoodle</span><span class="brand-dot" aria-hidden="true"></span></a>
+    <nav aria-label="Footer">
+      <a href="index.html">Visualiser</a>
+      <a href="ear-training.html">Ear training</a>
+      <a href="lessons.html">Lessons</a>
+      <a href="fretboard-king.html">Fretboard King</a>
+      <a href="about.html">About</a>
+    </nav>
+    <span>© <span data-year></span> Fretnoodle</span>
+  </footer>
+
+</div>
+<script src="assets/js/pitch-detector.js?v=4"></script>
+<script src="assets/js/ear-trainer.js?v=9"></script>
+<script src="assets/js/site.js?v=3"></script>
+</body>
+</html>
