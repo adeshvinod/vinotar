@@ -8,10 +8,39 @@
  *     hidden if those are empty. WhatsApp opens with a ready-written hello.
  *   - Mini fretboard: decorative chord maps drawn in the visualiser's style
  *     from data-root (pitch class, C = 0) and data-intervals ("0,4,7,11").
+ *   - Menu button on phones, and the floating WhatsApp button appearing
+ *     once the hero has scrolled away.
  *   - Footer year.
  */
 (function () {
   'use strict';
+
+  /* Menu (phones) ---------------------------------------------------------- */
+
+  document.querySelectorAll('.nav-toggle').forEach(function (button) {
+    var nav = document.getElementById(button.getAttribute('aria-controls'));
+    function setOpen(open) {
+      button.setAttribute('aria-expanded', open);
+      nav.classList.toggle('is-open', open);
+    }
+    button.addEventListener('click', function () { setOpen(button.getAttribute('aria-expanded') !== 'true'); });
+    nav.addEventListener('click', function (event) { if (event.target.closest('a')) setOpen(false); });
+    document.addEventListener('click', function (event) {
+      if (!event.target.closest('.site-header')) setOpen(false);
+    });
+  });
+
+  /* Floating WhatsApp: only once the hero (which has its own button) is gone */
+
+  var floatButton = document.querySelector('.whatsapp-float');
+  var hero = document.querySelector('.hero');
+  if (floatButton && hero && 'IntersectionObserver' in window) {
+    new IntersectionObserver(function (entries) {
+      floatButton.classList.toggle('is-away', entries[0].isIntersecting);
+    }, { threshold: 0.25 }).observe(hero);
+  } else if (floatButton) {
+    floatButton.classList.remove('is-away');
+  }
 
   /* Videos ----------------------------------------------------------------- */
 

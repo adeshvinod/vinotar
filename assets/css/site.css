@@ -87,7 +87,21 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
 .brand-word { font-family: Fraunces, Georgia, serif; font-style: italic; font-size: 28px; letter-spacing: -.01em; }
 .brand-dot { width: 7px; height: 7px; margin-top: 6px; border-radius: 50%; background: var(--accent); }
 
+.site-header { position: relative; }
 .site-nav { display: flex; flex-wrap: wrap; gap: 4px 28px; font-size: 13px; font-weight: 500; letter-spacing: .01em; }
+.nav-toggle {
+  display: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, .18);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, .35);
+  backdrop-filter: blur(8px);
+  color: var(--ink);
+  cursor: pointer;
+}
 .site-nav a { padding-bottom: 3px; color: var(--muted); text-decoration: none; }
 .site-nav a:hover { color: var(--ink); }
 .site-nav a[aria-current=page] { color: var(--ink); border-bottom: 1px solid var(--ink); }
@@ -252,6 +266,8 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
   box-shadow: 0 10px 30px rgba(0, 0, 0, .5), 0 0 0 4px rgba(37, 211, 102, .18);
   transition: transform 160ms, box-shadow 160ms;
 }
+.whatsapp-float.is-away { opacity: 0; transform: translateY(16px) scale(.9); pointer-events: none; }
+.whatsapp-float { transition: opacity 250ms, transform 250ms, box-shadow 160ms; }
 .whatsapp-float:hover { transform: scale(1.06); box-shadow: 0 12px 34px rgba(0, 0, 0, .5), 0 0 0 6px rgba(37, 211, 102, .22); }
 
 .bands { display: flex; flex-wrap: wrap; gap: 10px; margin: 6px 0 0; padding: 0; list-style: none; }
@@ -658,6 +674,72 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
 }
 
 @media (max-width: 640px) {
+  /* Compact header on every site page: wordmark + menu button */
+  .site-header { flex-wrap: nowrap; padding: 16px 0 0; }
+  .brand-word { font-size: 23px; }
+  .header-cta { display: none; }
+  .nav-toggle { display: grid; }
+  .site-nav {
+    position: absolute;
+    z-index: 20;
+    top: calc(100% + 10px);
+    right: 0;
+    display: none;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 210px;
+    padding: 8px;
+    border: 1px solid var(--line-strong);
+    border-radius: 18px;
+    background: #070707;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, .6);
+    font-size: 16px;
+  }
+  .site-nav.is-open { display: flex; }
+  .site-nav a { padding: 12px 14px; border-radius: 12px; }
+  .site-nav a[aria-current=page] { border-bottom: 0; background: #141414; }
+
+  /* Lessons hero: the photo fills the first screen, text over a dark fade */
+  .page-lessons .site-header { position: absolute; z-index: 10; top: 0; left: var(--gutter); right: var(--gutter); }
+  .page-lessons .hero {
+    position: relative;
+    display: block;
+    min-height: 100vh;
+    min-height: 100svh;
+    margin: 0 calc(-1 * var(--gutter));
+    padding: 0;
+  }
+  .page-lessons .hero-photo { position: absolute; inset: 0; max-width: none; }
+  .page-lessons .hero-photo img { width: 100%; height: 100%; min-height: 0; border-radius: 0; object-position: 58% 40%; }
+  .page-lessons .hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0, 0, 0, .55) 0%, rgba(0, 0, 0, 0) 18%, rgba(0, 0, 0, 0) 38%, rgba(0, 0, 0, .82) 64%, #000 92%);
+    pointer-events: none;
+  }
+  .page-lessons .hero-text {
+    position: absolute;
+    z-index: 2;
+    left: var(--gutter);
+    right: var(--gutter);
+    bottom: 28px;
+    gap: 14px;
+  }
+  .page-lessons .hero-text .eyebrow { color: #cfcbc2; }
+  .page-lessons .hero-title { font-size: clamp(38px, 10.5vw, 46px); line-height: 1.02; }
+  .page-lessons .hero-title i { color: #e2ddd1; }
+  .page-lessons .hero-text .lead { font-size: 15px; color: #d9d5cb; }
+  .page-lessons .hero-text .button-row { flex-wrap: nowrap; margin-top: 4px; }
+  .page-lessons .hero-text .btn-primary { flex: 1; min-height: 52px; font-size: 15px; }
+  .page-lessons .btn-watch { min-height: 52px; padding: 0 18px; background: rgba(0, 0, 0, .35); backdrop-filter: blur(8px); }
+  .page-lessons .btn-watch span { display: none; }
+  .page-lessons .btn-watch::after { content: 'Watch'; }
+  /* The four tags become one quiet line of facts */
+  .page-lessons .chips { gap: 4px 12px; }
+  .page-lessons .chip { padding: 0; border: 0; font-size: 12px; color: #bdb8ad; }
+  .page-lessons .chip:first-child { display: none; }   /* "One-on-one" is already in the line above */
+
   .section { padding-top: 88px; }
   .formats, .curriculum, .videos, .videos.is-three { grid-template-columns: minmax(0, 1fr); }
   .format, .topic { padding: 28px 24px; }
