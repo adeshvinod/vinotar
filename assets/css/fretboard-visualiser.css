@@ -1,0 +1,1110 @@
+/*
+ * Fretnoodle — Fretboard Visualiser
+ * Styles for fretboard-visualiser.html.
+ *
+ * Values follow the Fretnoodle Visualiser design handoff (sections 3–6).
+ * The accent colour and dot transition time are CSS variables so the
+ * script can change them at runtime.
+ *
+ * Contents
+ *   1. Tokens and base
+ *   2. Shared controls (buttons, switches, segmented control, sliders)
+ *   3. Header
+ *   4. Chord hero and transport
+ *   5. Full map bar and paint toolbar
+ *   6. Fretboard
+ *   7. Progression and chord picker
+ *   8. Settings panel
+ *   9. Tutorial
+ *  10. Session menu and toast
+ *  11. Responsive
+ */
+
+/* 1. Tokens and base ------------------------------------------------------ */
+
+:root {
+  --accent: #FFF000;
+  --dot-transition: 350ms;   /* set from the Motion slider */
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: #000;
+  color: #f3f1ea;
+  font-family: Inter, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: #f3f1ea; }
+a:hover { color: #ffffff; }
+
+button { font: inherit; cursor: pointer; color: inherit; }
+button:focus-visible,
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+[hidden] { display: none !important; }
+
+.page { min-height: 100vh; }
+.container { max-width: 1360px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 48px) 72px; }
+
+.eyebrow {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: #8f8f8f;
+}
+
+.hint { font-size: 12px; line-height: 1.5; color: #8f8f8f; }
+
+/* 2. Shared controls ------------------------------------------------------ */
+
+/* Range sliders */
+input[type=range] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 28px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+input[type=range]::-webkit-slider-runnable-track { height: 2px; background: #2b2b2b; border-radius: 2px; }
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  margin-top: -7px;
+  border: 0;
+  border-radius: 50%;
+  background: #f3f1ea;
+}
+input[type=range]::-moz-range-track { height: 2px; background: #2b2b2b; border-radius: 2px; }
+input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border: 0; border-radius: 50%; background: #f3f1ea; }
+input[type=range]:focus-visible { outline: none; }
+input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 5px rgba(255, 240, 0, .3); }
+input[type=range]:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 5px rgba(255, 240, 0, .3); }
+
+/* Pill with an outline (Stream mode, Paint) */
+.btn-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid #262626;
+  border-radius: 999px;
+  background: transparent;
+  color: #cfcbc2;
+  font-size: 13px;
+  font-weight: 500;
+}
+.btn-pill[aria-pressed=true] { border-color: #f3f1ea; color: #f3f1ea; }
+
+.btn-outline {
+  min-height: 44px;
+  padding: 0 20px;
+  border: 1px solid #262626;
+  border-radius: 999px;
+  background: transparent;
+  color: #cfcbc2;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.btn-primary {
+  min-height: 44px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #0a0a0a;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.btn-small {
+  min-height: 32px;
+  padding: 0 14px;
+  border: 1px solid #262626;
+  border-radius: 999px;
+  background: transparent;
+  color: #cfcbc2;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* 32px round − / + stepper button */
+.btn-step {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid #262626;
+  border-radius: 50%;
+  background: transparent;
+  color: #f3f1ea;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.btn-link {
+  min-height: 32px;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  color: #a9a59c;
+  font-size: 13px;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-color: #3a3a3a;
+}
+.btn-link.is-standalone { align-self: flex-start; }
+
+/* Small switch: the whole row is a role="switch" button */
+.switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #cfcbc2;
+  font-size: 13px;
+  text-align: left;
+}
+.switch .switch-track {
+  position: relative;
+  flex: none;
+  width: 38px;
+  height: 22px;
+  border-radius: 999px;
+  background: #2b2b2b;
+  transition: background 200ms;
+}
+.switch .switch-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #9a968d;
+  transition: transform 200ms, background 200ms;
+}
+.switch[aria-checked=true] .switch-track { background: var(--accent); }
+.switch[aria-checked=true] .switch-knob { background: #0a0a0a; transform: translateX(16px); }
+
+/* Segmented control (Intervals / Notes, Thin / Thick) */
+.segmented {
+  display: flex;
+  align-self: flex-start;
+  padding: 3px;
+  border: 1px solid #262626;
+  border-radius: 999px;
+}
+.segmented button {
+  min-height: 38px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #9a968d;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 200ms, color 200ms;
+}
+.segmented button[aria-pressed=true] { background: #f3f1ea; color: #0a0a0a; }
+
+/* Label · − · value · + */
+.stepper { display: flex; align-items: center; gap: 6px; }
+.stepper-value {
+  min-width: 18px;
+  text-align: center;
+  color: #f3f1ea;
+  font-family: Fraunces, Georgia, serif;
+  font-size: 17px;
+}
+.stepper-value.is-wide { min-width: 24px; }   /* fits "+11" */
+
+/* 3. Header --------------------------------------------------------------- */
+
+.site-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 32px;
+  padding: 28px 0 8px;
+}
+
+.header-start { display: flex; align-items: center; gap: 18px; }
+.header-end { display: flex; align-items: center; gap: 10px; }
+
+.brand { display: flex; align-items: center; gap: 10px; color: #f3f1ea; text-decoration: none; }
+.brand-word {
+  font-family: Fraunces, Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 28px;
+  letter-spacing: -.01em;
+}
+.brand-dot { width: 7px; height: 7px; margin-top: 6px; border-radius: 50%; background: var(--accent); }
+
+.site-nav { display: flex; flex-wrap: wrap; gap: 4px 28px; font-size: 13px; font-weight: 500; letter-spacing: .01em; }
+.site-nav a { padding-bottom: 3px; color: #8f8f8f; text-decoration: none; }
+.site-nav a[aria-current=page] { color: #f3f1ea; border-bottom: 1px solid #f3f1ea; }
+
+/* 4. Chord hero and transport --------------------------------------------- */
+
+.hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px;
+  padding: 48px 0 36px;
+}
+.hero-main { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+
+.chord-name {
+  margin: 0;
+  font-family: Fraunces, Georgia, serif;
+  font-weight: 300;
+  font-size: clamp(72px, 9vw, 128px);
+  line-height: .85;
+  letter-spacing: -.045em;
+  color: #f3f1ea;
+}
+.chord-name .chord-quality {
+  margin-left: .12em;
+  font-style: italic;
+  font-weight: 300;
+  font-size: .5em;
+  letter-spacing: -.02em;
+  color: #bdb8ad;
+}
+
+.tone-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.tone-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 14px 7px 8px;
+  border: 1px solid #1f1f1f;
+  border-radius: 999px;
+}
+.tone-chip-interval {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  color: #0a0a0a;
+  font-family: Fraunces, Georgia, serif;
+  font-weight: 700;
+  font-size: 11px;
+}
+.tone-chip.is-excluded .tone-chip-interval { opacity: .3; }
+.tone-chip-note { font-family: Fraunces, Georgia, serif; font-size: 17px; color: #e7e3d9; }
+
+.hero-transport { display: flex; flex-direction: column; align-items: flex-end; gap: 14px; }
+.transport-buttons { display: flex; align-items: center; gap: 14px; }
+
+.btn-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: 1px solid #262626;
+  border-radius: 50%;
+  background: transparent;
+  color: #f3f1ea;
+}
+.btn-play {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 68px;
+  height: 68px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #0a0a0a;
+}
+
+.meter { display: flex; align-items: center; gap: 14px; font-size: 12px; letter-spacing: .04em; color: #8f8f8f; }
+.beat-dots { display: flex; gap: 6px; }
+.beat-dots span { width: 6px; height: 6px; border-radius: 50%; background: #2b2b2b; transition: background 80ms; }
+.beat-dots span.is-on { background: var(--accent); }
+
+/* 5. Full map bar and paint toolbar --------------------------------------- */
+
+.map-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 24px;
+  padding: 22px 0;
+  border-top: 1px solid #1a1a1a;
+}
+.map-bar-text-group { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.map-bar-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+
+.map-legend-dot {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+  transition: box-shadow 200ms;
+}
+.map-legend-dot.is-ringed { box-shadow: 0 0 0 3px #ffffff; }
+
+.map-bar-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.map-bar-title { font-family: Fraunces, Georgia, serif; font-size: 20px; letter-spacing: -.01em; color: #f3f1ea; }
+.map-bar-caption { font-size: 13px; color: #8f8f8f; }
+
+/* Full map: the hero control */
+.full-map-switch {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 60px;
+  padding: 0 12px 0 26px;
+  border: 1.5px solid var(--accent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--accent);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: .01em;
+  transition: background 220ms, color 220ms;
+}
+.full-map-switch .switch-track {
+  position: relative;
+  flex: none;
+  width: 46px;
+  height: 28px;
+  border-radius: 999px;
+  background: #2b2b2b;
+  transition: background 220ms;
+}
+.full-map-switch .switch-knob {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #9a968d;
+  transition: transform 220ms cubic-bezier(.2, .9, .25, 1.1), background 220ms;
+}
+/* While Full map is off, the switch (border, label and icon) breathes to invite a click */
+.full-map-switch[aria-checked=false] { animation: full-map-glow 2.4s ease-in-out infinite; }
+.full-map-switch[aria-checked=false] > svg { animation: full-map-icon-glow 2.4s ease-in-out infinite; }
+@keyframes full-map-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(255, 240, 0, 0), 0 0 10px 0 rgba(255, 240, 0, .22);
+    text-shadow: 0 0 4px rgba(255, 240, 0, .35);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(255, 240, 0, .16), 0 0 40px 6px rgba(255, 240, 0, .5);
+    text-shadow: 0 0 8px rgba(255, 240, 0, .95), 0 0 20px rgba(255, 240, 0, .7);
+  }
+}
+@keyframes full-map-icon-glow {
+  0%, 100% { filter: drop-shadow(0 0 2px rgba(255, 240, 0, .4)); }
+  50%      { filter: drop-shadow(0 0 6px rgba(255, 240, 0, .95)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .full-map-switch[aria-checked=false],
+  .full-map-switch[aria-checked=false] > svg { animation: none; }
+  .full-map-switch[aria-checked=false] {
+    box-shadow: 0 0 0 4px rgba(255, 240, 0, .14), 0 0 30px 4px rgba(255, 240, 0, .45);
+    text-shadow: 0 0 8px rgba(255, 240, 0, .8);
+  }
+}
+.full-map-switch[aria-checked=true] { background: var(--accent); color: #0a0a0a; }
+.full-map-switch[aria-checked=true] .switch-track { background: #0a0a0a; }
+.full-map-switch[aria-checked=true] .switch-knob { background: var(--accent); transform: translateX(18px); }
+
+/* Paint toolbar (visible in paint mode) */
+.paint-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 22px;
+  padding: 0 0 22px;
+  font-size: 13px;
+  color: #a9a59c;
+}
+.paint-toolbar .switch { min-height: 32px; }
+.brush-colors { display: flex; align-items: center; gap: 8px; }
+.brush-color { width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; }
+.brush-color[aria-pressed=true] { box-shadow: 0 0 0 2px #000, 0 0 0 3px #f3f1ea; }
+
+/* 6. Fretboard ------------------------------------------------------------ */
+
+/* Scroll box: the board never shrinks below 1100px */
+.fretboard-scroll {
+  overflow-x: auto;
+  margin: 0 -8px;
+  padding: 8px 8px 4px;
+  scrollbar-width: thin;
+  scrollbar-color: #2b2b2b transparent;
+}
+.fretboard-scroll::-webkit-scrollbar { height: 6px; }
+.fretboard-scroll::-webkit-scrollbar-thumb { background: #2b2b2b; border-radius: 6px; }
+
+.fretboard-frame { position: relative; min-width: 1100px; }
+
+/* 19 fret columns over an absolutely positioned string layer.
+   Z-order: inlays 0 · strings and fret wires 1 · note names 2 · dots 3 · MIDI rings 4 */
+.fretboard { position: relative; display: flex; height: 324px; isolation: isolate; }
+
+.strings { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.string { position: absolute; left: 0; right: 0; }
+.string-1 { top: 26px;    height: 1.5px; background: linear-gradient(90deg, #5aa9a6 0%, #6aa3ad 50%, #a59bc0 78%, #d6a0c6 100%); }
+.string-2 { top: 80px;    height: 2px;   background: linear-gradient(90deg, #429c99 0%, #4f9aa1 50%, #8f93b6 78%, #cf8fbd 100%); }
+.string-3 { top: 134px;   height: 2.5px; background: linear-gradient(90deg, #3f9a98 0%, #4c98a0 50%, #8c93b5 78%, #cf8fbd 100%); }
+.string-4 { top: 187.5px; height: 3px;   background: linear-gradient(90deg, #3f9a98 0%, #4c98a0 50%, #8c93b5 78%, #cf8fbd 100%); }
+.string-5 { top: 241px;   height: 3.5px; background: linear-gradient(90deg, #3f9a98 0%, #4c98a0 50%, #8c93b5 78%, #cf8fbd 100%); }
+.string-6 { top: 294.5px; height: 4.5px; background: linear-gradient(90deg, #3f9a98 0%, #4c98a0 50%, #8c93b5 78%, #cf8fbd 100%); }
+
+.fret-column { position: relative; min-width: 0; }
+
+.fret-inlay {
+  position: absolute;
+  z-index: 0;
+  left: 27%;
+  right: 27%;
+  top: 57px;
+  height: 214px;
+  border-radius: 1px;
+  background: #2b2216;
+}
+.fret-wire {
+  position: absolute;
+  z-index: 1;
+  left: -1px;
+  top: 27px;
+  width: 2px;
+  height: 270px;
+  background: #ebe8e1;
+}
+.fret-wire.is-nut { width: 3px; }
+
+/* One clickable cell per string/fret */
+.fret-cell {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 54px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.fret-cell:focus-visible { outline-offset: -2px; }
+
+.note-name {
+  position: absolute;
+  z-index: 2;
+  left: 7px;
+  top: 50%;
+  transform: translateY(-58%);
+  font-family: Fraunces, Georgia, serif;
+  font-size: 19px;
+  color: #4a4a4a;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.fretboard.hide-note-names .note-name { visibility: hidden; }
+
+/* Note dot: always in the DOM so it can animate in and out */
+.note-dot {
+  position: absolute;
+  z-index: 3;
+  left: 50%;
+  top: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+  color: #0a0a0a;
+  font-family: Fraunces, Georgia, serif;
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: -.02em;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(.4);
+  pointer-events: none;
+  transition:
+    opacity var(--dot-transition) ease,
+    transform var(--dot-transition) cubic-bezier(.2, .9, .25, 1.15),
+    background var(--dot-transition) ease,
+    box-shadow var(--dot-transition) ease;
+}
+.note-dot.is-visible { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+.note-dot.is-visible.is-excluded { opacity: .3; }
+.note-dot.is-ringed { box-shadow: 0 0 0 3px #ffffff; }
+.note-dot.is-pulsing { animation: dot-pulse 260ms ease-out; }
+@keyframes dot-pulse {
+  0% { filter: brightness(1.35); }
+  100% { filter: brightness(1); }
+}
+
+/* Ring shown while a MIDI guitar plays that string/fret; fades on note-off */
+.midi-ring {
+  position: absolute;
+  z-index: 4;
+  left: 50%;
+  top: 50%;
+  width: 55px;
+  height: 55px;
+  margin: -27.5px 0 0 -27.5px;
+  border: 3px solid #00ffff;
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 240ms linear;
+}
+.midi-ring.is-on { opacity: 1; transition: none; }
+
+/* Chord transition: real dots hide while the transition layer animates */
+.fretboard.is-transitioning .note-dot { opacity: 0 !important; transition: none !important; }
+.fretboard.is-snapping .note-dot { transition: none !important; }
+.transition-layer { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+.transition-dot {
+  position: absolute;
+  width: 42px;
+  height: 42px;
+  margin: -21px 0 0 -21px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: .8;
+}
+
+.fret-numbers { display: flex; padding-top: 14px; }
+.fret-numbers div {
+  min-width: 0;
+  text-align: center;
+  font-family: Fraunces, Georgia, serif;
+  font-weight: 600;
+  font-size: 25px;
+  font-variant-numeric: oldstyle-nums;
+  color: #f3f1ea;
+}
+
+/* Drawing layer for paint mode, one canvas per chord */
+.paint-layer { position: absolute; inset: 0; z-index: 6; cursor: crosshair; touch-action: none; }
+.paint-layer canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+/* 7. Progression and chord picker ----------------------------------------- */
+
+.progression { padding-top: 56px; }
+.progression-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 18px;
+}
+.progression-title { display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1 1 260px; }
+/* Looks like a heading until hovered or focused */
+.progression-name {
+  width: 100%;
+  max-width: 520px;
+  margin-left: -8px;
+  padding: 2px 8px 4px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: #f3f1ea;
+  font-family: Fraunces, Georgia, serif;
+  font-size: 26px;
+  letter-spacing: -.02em;
+  transition: border-color 160ms, background 160ms;
+}
+.progression-name::placeholder { color: #4a4a4a; font-style: italic; }
+.progression-name:hover { border-color: #262626; }
+.progression-name:focus { outline: none; border-color: #3a3a3a; background: #0d0d0d; }
+
+.progression-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px; font-size: 13px; color: #a9a59c; }
+.toolbar-separator { width: 1px; height: 18px; background: #262626; }
+
+.chord-cards { display: flex; flex-wrap: wrap; gap: 10px; }
+.chord-card-list { display: contents; }
+
+.chord-card {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 150px;
+  padding: 16px 20px 18px;
+  border: 1px solid #222222;
+  border-radius: 14px;
+  background: transparent;
+  color: #f3f1ea;
+  text-align: left;
+  transition: border-color 200ms, background 200ms;
+}
+.chord-card[aria-current=true] { border-color: #f3f1ea; background: #0d0d0d; }
+.chord-card-name { font-family: Fraunces, Georgia, serif; font-size: 24px; line-height: 1; letter-spacing: -.02em; }
+.chord-card-name i,
+.picker-preview-quality { font-style: italic; font-weight: 300; color: #bdb8ad; }
+.chord-card-meta { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #8f8f8f; }
+.chord-card-progress {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  height: 2px;
+  background: var(--accent);
+  transition: width 120ms linear;
+}
+
+.add-chord-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 150px;
+  min-height: 76px;
+  padding: 0 22px;
+  border: 1px dashed #333333;
+  border-radius: 14px;
+  background: transparent;
+  color: #a9a59c;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.chord-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-top: 16px;
+  padding: 28px;
+  border: 1px solid #1f1f1f;
+  border-radius: 18px;
+  background: #070707;
+}
+.picker-row { display: flex; flex-direction: column; gap: 12px; }
+.picker-options { display: flex; flex-wrap: wrap; gap: 6px; }
+.picker-root,
+.picker-quality {
+  border: 1px solid #262626;
+  background: transparent;
+  color: #cfcbc2;
+  font-family: Fraunces, Georgia, serif;
+}
+.picker-root { width: 48px; height: 48px; padding: 0; border-radius: 50%; font-size: 17px; }
+.picker-quality { min-height: 44px; padding: 0 16px; border-radius: 999px; font-style: italic; font-size: 16px; }
+.picker-root[aria-pressed=true],
+.picker-quality[aria-pressed=true] { border-color: #f3f1ea; background: #f3f1ea; color: #0a0a0a; }
+
+.picker-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 20px;
+  border-top: 1px solid #1a1a1a;
+}
+.picker-preview { font-family: Fraunces, Georgia, serif; font-size: 30px; letter-spacing: -.02em; }
+.picker-preview-notes {
+  margin-left: 14px;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 13px;
+  letter-spacing: 0;
+  color: #8f8f8f;
+}
+.picker-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+/* 8. Settings panel ------------------------------------------------------- */
+
+/* 1px gap over a grey background gives hairline dividers between cells */
+.settings {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1px;
+  margin-top: 56px;
+  overflow: hidden;
+  border: 1px solid #1c1c1c;
+  border-radius: 18px;
+  background: #1c1c1c;
+}
+.settings-cell { display: flex; flex-direction: column; gap: 14px; padding: 26px 26px 28px; background: #000; }
+.settings-cell.is-labels { gap: 18px; }
+.settings-spacer { flex: 1; }
+
+.interval-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: #8f8f8f; }
+.interval-legend span { display: flex; align-items: center; gap: 6px; }
+.interval-legend i { width: 8px; height: 8px; border-radius: 50%; }
+
+.big-value { display: flex; align-items: baseline; gap: 8px; }
+.big-value label {
+  font-family: Fraunces, Georgia, serif;
+  font-weight: 300;
+  font-size: 44px;
+  line-height: 1;
+  letter-spacing: -.03em;
+  color: #f3f1ea;
+}
+.big-value span { font-size: 13px; color: #8f8f8f; }
+
+.volume-row { display: flex; align-items: center; gap: 14px; }
+.volume-row label { min-width: 58px; font-size: 13px; color: #cfcbc2; }
+.volume-row output { min-width: 30px; text-align: right; font-size: 12px; color: #8f8f8f; }
+
+.btn-start-again {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 48px;
+  border: 1px solid #262626;
+  border-radius: 999px;
+  background: transparent;
+  color: #f3f1ea;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Tuning: six string steppers in two columns (strings 1–3, then 4–6) */
+.tuning-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: repeat(3, auto);
+  grid-auto-flow: column;
+  gap: 8px 18px;
+  font-size: 13px;
+  color: #a9a59c;
+}
+.tuning-row { display: flex; align-items: center; gap: 6px; }
+.tuning-string-number { min-width: 12px; font-size: 11px; color: #8f8f8f; }
+.tuning-row .stepper-value { min-width: 28px; }
+
+/* 9. Tutorial ------------------------------------------------------------ */
+
+/* Header button, with a dot until the tour has been opened once */
+.btn-tutorial {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 0 14px;
+  border: 1px solid #262626;
+  border-radius: 999px;
+  background: transparent;
+  color: #cfcbc2;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .02em;
+}
+.btn-tutorial:hover { border-color: #3a3a3a; color: #f3f1ea; }
+.tutorial-new-dot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: tutorial-ping 1.8s ease-out infinite;
+}
+@keyframes tutorial-ping {
+  0%   { box-shadow: 0 0 0 0 rgba(255, 240, 0, .55); }
+  80%  { box-shadow: 0 0 0 9px rgba(255, 240, 0, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 240, 0, 0); }
+}
+
+/* The tour never blocks the page: only the card takes clicks, so students
+   can do each step's task on the real controls. */
+.tour { position: fixed; inset: 0; z-index: 50; pointer-events: none; }
+
+.tour-spotlight {
+  position: fixed;
+  border-radius: 16px;
+  box-shadow: 0 0 0 1.5px var(--accent), 0 0 0 100vmax rgba(0, 0, 0, .72);
+  transition: top 320ms ease, left 320ms ease, width 320ms ease, height 320ms ease;
+}
+.tour-spotlight.is-empty { box-shadow: 0 0 0 100vmax rgba(0, 0, 0, .72); }
+
+.tour-card {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: min(400px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  padding: 22px 24px 20px;
+  border: 1px solid #262626;
+  border-radius: 18px;
+  background: #070707;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .6);
+  pointer-events: auto;
+  transition: top 320ms ease, left 320ms ease, opacity 200ms ease;
+}
+.tour-card:focus { outline: none; }
+.tour-card.is-wide { width: min(640px, calc(100vw - 32px)); }
+.tour-card.is-fading { opacity: 0; }
+
+.tour-card-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.tour-close {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin: -6px -8px -6px 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #8f8f8f;
+}
+.tour-close:hover { color: #f3f1ea; }
+
+.tour-title {
+  margin: 0;
+  font-family: Fraunces, Georgia, serif;
+  font-weight: 400;
+  font-size: 27px;
+  line-height: 1.12;
+  letter-spacing: -.02em;
+  color: #f3f1ea;
+}
+.tour-title i { font-weight: 300; color: #bdb8ad; }
+
+.tour-body { display: flex; flex-direction: column; gap: 12px; font-size: 14px; line-height: 1.6; color: #cfcbc2; }
+.tour-body p { margin: 0; }
+.tour-body strong { font-weight: 600; color: #f3f1ea; }
+
+.tour-why {
+  padding: 2px 0 2px 14px;
+  border-left: 2px solid var(--accent);
+  font-size: 13px;
+  color: #a9a59c;
+}
+
+/* Dock: a short, wide card (text left, task and buttons right) for when a
+   tall card would cover the part of the page the student is using */
+.tour-card.is-dock {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  grid-template-areas: "top top" "title task" "body task" "body footer";
+  align-content: start;
+  gap: 8px 32px;
+  width: min(1040px, calc(100vw - 32px));
+  padding: 18px 24px;
+}
+.tour-card.is-dock .tour-card-top { grid-area: top; }
+.tour-card.is-dock .tour-title { grid-area: title; font-size: 23px; }
+.tour-card.is-dock .tour-body { grid-area: body; gap: 8px; font-size: 13px; line-height: 1.55; }
+.tour-card.is-dock .tour-task-slot { grid-area: task; }
+.tour-card.is-dock .tour-footer { grid-area: footer; align-self: end; }
+.tour-task-slot:empty { display: none; }
+
+/* "Try it" task: dashed until the student does it */
+.tour-task {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px dashed #333;
+  border-radius: 12px;
+  font-size: 13px;
+  color: #e7e3d9;
+  transition: border-color 200ms, background 200ms;
+}
+.tour-task-icon {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+  border: 1px solid #333;
+  border-radius: 50%;
+  color: transparent;
+  transition: background 200ms, border-color 200ms, color 200ms;
+}
+.tour-task-label { display: block; margin-bottom: 2px; font-size: 10px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: #8f8f8f; }
+.tour-task.is-done { border-style: solid; border-color: var(--accent); background: rgba(255, 240, 0, .05); }
+.tour-task.is-done .tour-task-icon { border-color: var(--accent); background: var(--accent); color: #0a0a0a; }
+.tour-task.is-done .tour-task-label { color: var(--accent); }
+
+kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border: 1px solid #333;
+  border-bottom-width: 2px;
+  border-radius: 6px;
+  background: #111;
+  color: #f3f1ea;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  vertical-align: 1px;
+}
+
+.tour-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 4px; }
+.tour-progress { display: flex; flex-wrap: wrap; gap: 5px; }
+.tour-progress span { width: 6px; height: 6px; border-radius: 50%; background: #2b2b2b; transition: background 200ms, width 200ms; }
+.tour-progress span.is-seen { background: #5a5a5a; }
+.tour-progress span.is-current { width: 16px; border-radius: 3px; background: var(--accent); }
+.tour-buttons { display: flex; gap: 8px; }
+.tour-buttons .btn-small.is-primary { border-color: var(--accent); background: var(--accent); color: #0a0a0a; font-weight: 600; }
+
+/* Shortcut sheet (last step) */
+.shortcut-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px 28px; }
+.shortcut-group { display: flex; flex-direction: column; gap: 8px; }
+.shortcut-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13px; color: #cfcbc2; }
+.shortcut-keys { display: flex; flex: 0 0 auto; align-items: center; gap: 4px; font-size: 11px; color: #8f8f8f; }
+
+/* 10. Session menu and toast --------------------------------------------- */
+
+.session-menu { position: relative; }
+#sessionButton[aria-expanded=true] { border-color: #f3f1ea; color: #f3f1ea; }
+
+/* Small dot on the Session button: accent when autosaved, grey when it couldn't be */
+.session-saved-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); transition: background 200ms; }
+.session-saved-dot.is-off { background: #4a4a4a; }
+
+.session-panel {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 10px);
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: min(380px, calc(100vw - 32px));
+  padding: 10px;
+  border: 1px solid #262626;
+  border-radius: 18px;
+  background: #070707;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .6);
+}
+.session-status { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px 12px; border-bottom: 1px solid #1a1a1a; margin-bottom: 6px; }
+
+.session-items { display: flex; flex-direction: column; gap: 2px; }
+
+.session-name-step { display: flex; flex-direction: column; gap: 10px; padding: 6px 12px 12px; }
+.session-name-input {
+  height: 48px;
+  padding: 0 14px;
+  border: 1px solid #333;
+  border-radius: 12px;
+  background: #000;
+  color: #f3f1ea;
+  font: 400 22px Fraunces, Georgia, serif;
+  letter-spacing: -.01em;
+}
+.session-name-input:focus { outline: none; border-color: var(--accent); }
+.session-name-actions { display: flex; justify-content: flex-end; gap: 8px; padding-top: 4px; }
+.btn-small.is-primary { border-color: var(--accent); background: var(--accent); color: #0a0a0a; font-weight: 600; }
+
+.session-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 12px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: #cfcbc2;
+  text-align: left;
+}
+.session-item:hover { background: #111; color: #f3f1ea; }
+.session-item > svg { flex: 0 0 auto; color: #8f8f8f; }
+.session-item:hover > svg { color: var(--accent); }
+.session-item > span { display: flex; flex: 1; flex-direction: column; gap: 2px; min-width: 0; }
+.session-item strong { font-size: 14px; font-weight: 500; color: #f3f1ea; }
+.session-item > span > span { font-size: 12px; line-height: 1.4; color: #8f8f8f; }
+.session-item:disabled { cursor: progress; opacity: .6; }
+
+.share-link { display: flex; gap: 8px; padding: 0 12px 10px 44px; }
+.share-link input {
+  flex: 1;
+  min-width: 0;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid #262626;
+  border-radius: 999px;
+  background: #000;
+  color: #cfcbc2;
+  font: 12px Inter, system-ui, sans-serif;
+}
+.share-link input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+.toast {
+  position: fixed;
+  z-index: 60;
+  left: 50%;
+  bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: calc(100vw - 32px);
+  padding: 10px 10px 10px 18px;
+  border: 1px solid #262626;
+  border-radius: 999px;
+  background: #0d0d0d;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, .6);
+  color: #e7e3d9;
+  font-size: 13px;
+  transform: translateX(-50%);
+  animation: toast-in 220ms ease-out;
+}
+.toast:not(:has(.toast-action:not([hidden]))) { padding-right: 18px; }
+.toast-action {
+  min-height: 30px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #0a0a0a;
+  font-size: 12px;
+  font-weight: 600;
+}
+@keyframes toast-in {
+  from { opacity: 0; transform: translate(-50%, 8px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* 11. Responsive ---------------------------------------------------------- */
+
+@media (max-width: 640px) {
+  .btn-step { width: 40px; height: 40px; }
+  .tour-card,
+  .tour-card.is-wide { width: auto; }
+}

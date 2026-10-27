@@ -1,0 +1,359 @@
+<!doctype html>
+<!--
+  Fretnoodle — Fretboard Visualiser
+
+  Enter notes on the fretboard, build a chord progression and map every chord
+  tone across the neck, with animated transitions between chords, metronome
+  playback, guitar sounds, alternate tunings, MIDI guitar input and a paint
+  layer for annotations.
+
+  Markup only. Styles:  assets/css/fretboard-visualiser.css
+               Logic:   assets/js/fretboard-visualiser.js
+               Sounds:  guitar sounds/*.wav
+
+  Every interactive element carries a data-action attribute; the script
+  handles them all through one delegated click listener. Elements marked
+  data-chrome are hidden in stream mode.
+
+  The guided tour (Tutorial button, or the ? key) lives in
+  assets/js/fretboard-tutorial.js. Saving, share links and PDF export (the
+  Session menu) live in assets/js/fretboard-session.js.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fretnoodle — Fretboard visualiser</title>
+  <meta name="description" content="Enter notes on a guitar fretboard, build chord progressions and see every chord tone mapped across the neck.">
+  <link rel="icon" type="image/x-icon" href="favicon.ico?v=2">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..600&family=Inter:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="assets/css/fretboard-visualiser.css?v=4">
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-CQBNR4ZQDX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-CQBNR4ZQDX');
+  </script>
+</head>
+<body>
+<div class="page">
+<div class="container">
+
+  <!-- Header -------------------------------------------------------------- -->
+  <header class="site-header">
+    <div class="header-start">
+      <a class="brand" href="index.html"><span class="brand-word">fretnoodle</span><span class="brand-dot" aria-hidden="true"></span></a>
+      <button type="button" class="btn-tutorial" id="tutorialButton" data-chrome>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M9.5 9.2a2.6 2.6 0 0 1 5 .9c0 1.7-2.5 2.3-2.5 3.9"/><path d="M12 17.2h.01"/></svg>
+        <span>Tutorial</span>
+        <span class="tutorial-new-dot" id="tutorialNewDot" aria-hidden="true" hidden></span>
+      </button>
+    </div>
+    <nav class="site-nav" aria-label="Main" data-chrome>
+      <a href="fretboard-visualiser.html" aria-current="page">Visualiser</a>
+      <a href="visualizer.html">Lessons</a>
+      <a href="#">Fretboard game</a>
+      <a href="index.html">About</a>
+    </nav>
+    <div class="header-end">
+      <div class="session-menu" data-chrome>
+        <button type="button" class="btn-pill" id="sessionButton" aria-expanded="false" aria-controls="sessionPanel">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3.5h11l3.5 3.5v13.5H5z"/><path d="M8 3.5v5h7v-5"/><path d="M8 20.5v-6h8v6"/></svg>
+          <span>Session</span>
+          <span class="session-saved-dot" id="sessionSavedDot" aria-hidden="true"></span>
+        </button>
+
+        <!-- Save / open / share / export (fretboard-session.js) -->
+        <div class="session-panel" id="sessionPanel" hidden>
+          <div class="session-status">
+            <span class="eyebrow">This session</span>
+            <span class="hint" id="sessionStatus">Saved automatically in this browser</span>
+          </div>
+
+          <!-- Asked before saving a file or a PDF -->
+          <form class="session-name-step" id="sessionNameStep" hidden>
+            <label class="eyebrow" for="sessionNameInput">Name this progression</label>
+            <input id="sessionNameInput" class="session-name-input" type="text" maxlength="80" autocomplete="off" spellcheck="false" placeholder="e.g. Blues in A">
+            <span class="hint">Used for the file name and the PDF title.</span>
+            <div class="session-name-actions">
+              <button type="button" class="btn-small" id="sessionNameCancel">Cancel</button>
+              <button type="submit" class="btn-small is-primary" id="sessionNameConfirm">Save</button>
+            </div>
+          </form>
+
+          <div class="session-items" id="sessionItems">
+          <button type="button" class="session-item" id="sessionSaveFile">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="M7.5 10.5L12 15l4.5-4.5"/><path d="M4.5 19.5h15"/></svg>
+            <span><strong>Save as file</strong><span>A .json you can open later or on another device</span></span>
+            <kbd>⌘S</kbd>
+          </button>
+          <button type="button" class="session-item" id="sessionOpenFile">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 6.5v12h17v-10h-9l-2-2z"/></svg>
+            <span><strong>Open file</strong><span>Load a session saved from Fretnoodle</span></span>
+            <kbd>⌘O</kbd>
+          </button>
+          <button type="button" class="session-item" id="sessionShare">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>
+            <span><strong>Copy share link</strong><span>Opens this progression, drawings included, for anyone</span></span>
+          </button>
+          <div class="share-link" id="shareLinkRow" hidden>
+            <input type="text" id="shareLinkInput" readonly aria-label="Share link">
+            <button type="button" class="btn-small" id="shareLinkCopy">Copy</button>
+          </div>
+          <button type="button" class="session-item" id="sessionPdf">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2.5h8.5l4 4v15H6z"/><path d="M14 2.5v4.5h4.5"/><path d="M9 12.5h6M9 16h6"/></svg>
+            <span><strong>Export PDF</strong><span>Lesson notes: every chord, its full map and your drawings</span></span>
+          </button>
+          </div>
+          <input type="file" id="sessionFileInput" accept=".json,application/json" hidden>
+        </div>
+      </div>
+      <button type="button" class="btn-pill" data-action="toggleStreamMode" aria-pressed="false">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="19" height="13" rx="2"/><path d="M8 21h8"/></svg>
+        <span id="streamModeLabel">Stream mode</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Current chord and transport ------------------------------------------ -->
+  <section class="hero" aria-label="Current chord">
+    <div class="hero-main">
+      <div class="eyebrow" id="chordPosition"></div>
+      <h1 class="chord-name" id="chordName"></h1>
+      <div class="tone-chips" id="toneChips"></div>
+    </div>
+    <div class="hero-transport">
+      <div class="transport-buttons">
+        <button type="button" class="btn-circle" data-action="previousChord" aria-label="Previous chord">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <button type="button" class="btn-play" data-action="togglePlayback" aria-label="Play" id="playButton"></button>
+        <button type="button" class="btn-circle" data-action="nextChord" aria-label="Next chord">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+      </div>
+      <div class="meter">
+        <div class="beat-dots" id="beatDots" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+        <span id="meterLabel"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Full map bar --------------------------------------------------------- -->
+  <div class="map-bar">
+    <div class="map-bar-text-group">
+      <span class="map-legend-dot" id="mapLegendDot" aria-hidden="true"></span>
+      <div class="map-bar-text">
+        <span class="map-bar-title" id="mapBarTitle"></span>
+        <span class="map-bar-caption" id="mapBarCaption"></span>
+      </div>
+    </div>
+    <div class="map-bar-controls">
+      <button type="button" class="btn-pill" data-action="togglePaintMode" aria-pressed="false">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18.4 2.6a2 2 0 0 1 2.9 2.9L11 15.8 8.2 13z"/><path d="M7 14.5c-2 0-3.5 1.6-3.5 3.5 0 1.3-.7 2.2-1.5 2.5 1 .9 2.4 1.5 4 1.5 2.5 0 4.5-2 4.5-4.5z"/></svg>
+        <span>Paint</span>
+      </button>
+      <button type="button" class="full-map-switch" role="switch" aria-checked="false" data-action="toggleFullMap">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="7" r="1.6"/><circle cx="12" cy="7" r="1.6"/><circle cx="19" cy="7" r="1.6"/><circle cx="5" cy="17" r="1.6"/><circle cx="12" cy="17" r="1.6"/><circle cx="19" cy="17" r="1.6"/><path d="M2 12h20"/></svg>
+        <span>Full map</span>
+        <span class="switch-track" aria-hidden="true"><span class="switch-knob"></span></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Paint toolbar (paint mode only) --------------------------------------- -->
+  <div class="paint-toolbar" id="paintToolbar" hidden>
+    <div class="brush-colors" role="group" aria-label="Brush colour">
+      <button type="button" class="brush-color" data-action="selectBrushColor" data-value="0" aria-label="Orange" style="background:#FF8C00"></button>
+      <button type="button" class="brush-color" data-action="selectBrushColor" data-value="1" aria-label="Blue" style="background:#66B2FF"></button>
+      <button type="button" class="brush-color" data-action="selectBrushColor" data-value="2" aria-label="Pink" style="background:#FF3399"></button>
+    </div>
+    <div class="segmented" role="group" aria-label="Stroke">
+      <button type="button" data-action="selectBrushWidth" data-value="thin" aria-pressed="true">Thin</button>
+      <button type="button" data-action="selectBrushWidth" data-value="thick" aria-pressed="false">Thick</button>
+    </div>
+    <button type="button" class="switch" role="switch" aria-checked="false" data-action="toggleEraser">
+      <span>Eraser</span>
+      <span class="switch-track" aria-hidden="true"><span class="switch-knob"></span></span>
+    </button>
+    <button type="button" class="btn-small" data-action="clearDrawing">Clear drawing</button>
+    <span class="hint">Hold shift while drawing to draw on every chord</span>
+  </div>
+
+  <!-- Fretboard ------------------------------------------------------------ -->
+  <section class="fretboard-scroll" aria-label="Fretboard">
+    <div class="fretboard-frame" id="fretboardFrame">
+      <div class="fretboard" id="fretboard">
+        <div class="strings" aria-hidden="true">
+          <div class="string string-1"></div>
+          <div class="string string-2"></div>
+          <div class="string string-3"></div>
+          <div class="string string-4"></div>
+          <div class="string string-5"></div>
+          <div class="string string-6"></div>
+        </div>
+        <div class="transition-layer" id="transitionLayer" aria-hidden="true"></div>
+        <!-- fret columns are generated by the script -->
+      </div>
+      <div class="fret-numbers" id="fretNumbers" aria-hidden="true"></div>
+      <div class="paint-layer" id="paintLayer" hidden></div>
+    </div>
+  </section>
+
+  <!-- Progression ---------------------------------------------------------- -->
+  <section class="progression" aria-label="Progression" id="progression">
+    <div class="progression-header">
+      <div class="progression-title">
+        <h2 class="eyebrow"><label for="progressionName">Progression</label></h2>
+        <input id="progressionName" class="progression-name" type="text" maxlength="80" placeholder="Untitled progression" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="progression-toolbar">
+        <div class="stepper">
+          <span>Bars</span>
+          <button type="button" class="btn-step" data-action="decreaseBars" aria-label="Fewer bars">−</button>
+          <span class="stepper-value" id="barsValue"></span>
+          <button type="button" class="btn-step" data-action="increaseBars" aria-label="More bars">+</button>
+        </div>
+        <span class="toolbar-separator" aria-hidden="true"></span>
+        <div class="stepper">
+          <span>Transpose</span>
+          <button type="button" class="btn-step" data-action="transposeDown" aria-label="Transpose down a semitone">−</button>
+          <span class="stepper-value is-wide" id="transposeValue"></span>
+          <button type="button" class="btn-step" data-action="transposeUp" aria-label="Transpose up a semitone">+</button>
+        </div>
+        <span class="toolbar-separator" aria-hidden="true"></span>
+        <button type="button" class="btn-link" data-action="removeChord">Remove chord</button>
+      </div>
+    </div>
+
+    <div class="chord-cards">
+      <div class="chord-card-list" id="chordCardList"></div>
+      <button type="button" class="add-chord-card" data-action="toggleChordPicker" aria-expanded="false" id="addChordCard">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        <span>Add chord</span>
+      </button>
+    </div>
+
+    <div class="chord-picker" id="chordPicker" hidden>
+      <div class="picker-row">
+        <div class="eyebrow">Root</div>
+        <div class="picker-options" id="pickerRootOptions"></div>
+      </div>
+      <div class="picker-row">
+        <div class="eyebrow">Quality</div>
+        <div class="picker-options" id="pickerQualityOptions"></div>
+      </div>
+      <div class="picker-footer">
+        <div class="picker-preview" id="pickerPreview"></div>
+        <div class="picker-actions">
+          <button type="button" class="btn-outline" data-action="toggleChordPicker">Cancel</button>
+          <button type="button" class="btn-outline" data-action="addBlankChord">Blank chord</button>
+          <button type="button" class="btn-primary" data-action="addPickedChord">Add to progression</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Settings ------------------------------------------------------------- -->
+  <section class="settings" aria-label="Settings" data-chrome>
+
+    <div class="settings-cell is-labels">
+      <div class="eyebrow">Labels</div>
+      <div class="segmented" role="group" aria-label="Dot labels">
+        <button type="button" data-action="setLabelMode" data-value="intervals" aria-pressed="true">Intervals</button>
+        <button type="button" data-action="setLabelMode" data-value="notes" aria-pressed="false">Notes</button>
+      </div>
+      <button type="button" class="switch" role="switch" aria-checked="false" data-action="toggleColorByInterval">
+        <span>Colour by interval</span>
+        <span class="switch-track" aria-hidden="true"><span class="switch-knob"></span></span>
+      </button>
+      <div class="interval-legend" id="intervalLegend" hidden></div>
+      <div class="hint">Click a fret to add or remove a note · shift-click sets the root · hold ↑ and click to dim a note and leave it out of transitions</div>
+    </div>
+
+    <div class="settings-cell">
+      <div class="eyebrow">Tempo</div>
+      <div class="big-value"><label for="tempoSlider" id="tempoValue">100</label><span>bpm</span></div>
+      <input id="tempoSlider" type="range" min="40" max="220" step="1" value="100">
+      <button type="button" class="switch" role="switch" aria-checked="true" data-action="toggleMetronome">
+        <span>Metronome</span>
+        <span class="switch-track" aria-hidden="true"><span class="switch-knob"></span></span>
+      </button>
+      <button type="button" class="switch" role="switch" aria-checked="true" data-action="toggleStrum">
+        <span>Strum chords</span>
+        <span class="switch-track" aria-hidden="true"><span class="switch-knob"></span></span>
+      </button>
+      <div class="volume-row">
+        <label for="volumeSlider">Volume</label>
+        <input id="volumeSlider" type="range" min="0" max="1" step="0.05" value="0.5">
+        <output for="volumeSlider" id="volumeValue">50%</output>
+      </div>
+    </div>
+
+    <div class="settings-cell">
+      <div class="eyebrow">Motion</div>
+      <div class="big-value"><label for="transitionSlider" id="transitionValue">350</label><span>ms transition</span></div>
+      <input id="transitionSlider" type="range" min="0" max="1200" step="25" value="350">
+      <div class="settings-spacer"></div>
+      <button type="button" class="btn-start-again" data-action="startAgain">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+        <span>Start again</span>
+      </button>
+    </div>
+
+    <div class="settings-cell">
+      <div class="eyebrow">Tuning</div>
+      <div class="tuning-grid" id="tuningGrid"></div>
+      <button type="button" class="btn-link is-standalone" data-action="resetTuning">Standard tuning</button>
+      <button type="button" class="switch" role="switch" aria-checked="false" data-action="toggleMidi">
+        <span>MIDI guitar</span>
+        <span class="switch-track" aria-hidden="true"><span class="switch-knob"></span></span>
+      </button>
+      <div class="hint" id="midiStatus" hidden></div>
+    </div>
+
+  </section>
+
+</div>
+</div>
+
+<!-- Tutorial (fretboard-tutorial.js fills the card for each step) --------- -->
+<div class="tour" id="tour" hidden>
+  <div class="tour-spotlight" id="tourSpotlight" aria-hidden="true"></div>
+  <div class="tour-card" id="tourCard" role="dialog" aria-modal="false" aria-labelledby="tourTitle" tabindex="-1">
+    <div class="tour-card-top">
+      <span class="eyebrow" id="tourEyebrow"></span>
+      <button type="button" class="tour-close" id="tourClose" aria-label="Close tutorial">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <h2 class="tour-title" id="tourTitle"></h2>
+    <div class="tour-body" id="tourBody"></div>
+    <div class="tour-task-slot" id="tourTaskSlot"></div>
+    <div class="tour-footer">
+      <div class="tour-progress" id="tourProgress" aria-hidden="true"></div>
+      <div class="tour-buttons">
+        <button type="button" class="btn-small" id="tourBack">Back</button>
+        <button type="button" class="btn-small" id="tourNext">Next</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Messages from saving and loading -->
+<div class="toast" id="toast" role="status" aria-live="polite" hidden>
+  <span id="toastText"></span>
+  <button type="button" class="toast-action" id="toastAction" hidden></button>
+</div>
+
+<script src="assets/js/fretboard-visualiser.js?v=4"></script>
+<script src="assets/js/fretboard-session.js?v=4"></script>
+<script src="assets/js/fretboard-tutorial.js?v=4"></script>
+</body>
+</html>
