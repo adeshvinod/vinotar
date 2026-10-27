@@ -1,6 +1,6 @@
 /*
  * Fretnoodle — Fretboard Visualiser
- * Styles for fretboard-visualiser.html.
+ * Styles for index.html (the visualiser).
  *
  * Values follow the Fretnoodle Visualiser design handoff (sections 3–6).
  * The accent colour and dot transition time are CSS variables so the
@@ -668,6 +668,22 @@ input[type=range]:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 5px rgba(2
   transition: border-color 200ms, background 200ms;
 }
 .chord-card[aria-current=true] { border-color: #f3f1ea; background: #0d0d0d; }
+
+/* Long-press to reorder (see "Reordering" in fretboard-visualiser.js) */
+.chord-card { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.chord-card.is-pressing { transform: scale(.96); transition: transform 350ms ease, border-color 200ms, background 200ms; }
+.chord-card.is-drag-placeholder { border-style: dashed; border-color: #3a3a3a; background: transparent; opacity: .45; }
+.chord-card-ghost {
+  position: fixed;
+  z-index: 70;
+  margin: 0;
+  border-color: var(--accent);
+  background: #0d0d0d;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, .6), 0 0 24px rgba(255, 240, 0, .18);
+  transform: rotate(-2deg) scale(1.04);
+  pointer-events: none;
+}
+body.is-reordering, body.is-reordering * { cursor: grabbing !important; }
 .chord-card-name { font-family: Fraunces, Georgia, serif; font-size: 24px; line-height: 1; letter-spacing: -.02em; }
 .chord-card-name i,
 .picker-preview-quality { font-style: italic; font-weight: 300; color: #bdb8ad; }
@@ -988,6 +1004,46 @@ kbd {
 .shortcut-group { display: flex; flex-direction: column; gap: 8px; }
 .shortcut-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13px; color: #cfcbc2; }
 .shortcut-keys { display: flex; flex: 0 0 auto; align-items: center; gap: 4px; font-size: 11px; color: #8f8f8f; }
+
+/* Root hint: sits beside the note chips, the same height, so nothing jumps */
+.tone-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.root-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 4px 0 16px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  background: rgba(255, 240, 0, .05);
+  box-shadow: 0 0 24px rgba(255, 240, 0, .12);
+  color: #e7e3d9;
+  font-size: 13px;
+  white-space: nowrap;
+  animation: root-hint-in 300ms ease-out;
+}
+@keyframes root-hint-in { from { opacity: 0; transform: translateX(-8px); } }
+.root-hint-option {
+  height: 32px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #0a0a0a;
+  font: 400 18px Fraunces, Georgia, serif;
+  letter-spacing: -.01em;
+}
+.root-hint-option i { font-weight: 300; }
+.root-hint-dismiss {
+  height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #a9a59c;
+  font-size: 13px;
+}
+.root-hint-dismiss:hover { color: #f3f1ea; }
 
 /* 10. Session menu and toast --------------------------------------------- */
 

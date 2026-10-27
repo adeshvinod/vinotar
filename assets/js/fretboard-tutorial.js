@@ -1,7 +1,7 @@
 /**
  * Fretnoodle — Visualiser tutorial
  *
- * A guided tour of fretboard-visualiser.html, opened from the Tutorial button
+ * A guided tour of index.html (the visualiser), opened from the Tutorial button
  * next to the logo (or the ? key, which jumps straight to the shortcut sheet).
  *
  * How it works
@@ -80,14 +80,16 @@
       eyebrow: 'Chord name',
       title: 'Named for you',
       target: ['.hero'],
-      body: '<p>Each chip is a note and its interval: <strong>R</strong> root, <strong>b3 M3</strong> thirds, <strong>P5</strong> fifth, <strong>b7 M7</strong> sevenths.</p>'
+      body:
+        '<p>Each chip is a note and its interval: <strong>R</strong> root, <strong>b3 M3</strong> thirds, <strong>P5</strong> fifth, <strong>b7 M7</strong> sevenths.</p>' +
+        '<p class="tour-why">Wrong root? It will suggest the chord you meant.</p>'
     },
     {
       eyebrow: 'Progression',
       title: 'Add chords',
       target: ['#progression'],
       enter: function () { app.setState({ showProgression: true }); },
-      body: '<p><strong>Add chord</strong> places a shape for you. <strong>Blank chord</strong> starts empty. Click a card to edit it.</p>',
+      body: '<p><strong>Add chord</strong> goes after the selected card. Long-press a card to drag it.</p>',
       task: 'Add a chord, or press ' + key('Enter') + '.',
       check: function (state, start) { return state.chords.length > start.chordCount; }
     },
@@ -219,6 +221,7 @@
       '<div class="shortcut-group"><span class="eyebrow">Progression</span>' +
         row('Previous / next chord', key('←') + key('→')) +
         row('Add a blank chord', key('Enter')) +
+        row('Move a chord', 'long-press + drag') +
         row('Play / stop', key('M')) +
         row('Show / hide progression', key('B')) +
         row('Full screen', key('F')) +

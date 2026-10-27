@@ -1,7 +1,7 @@
 /**
  * Fretnoodle — Fretboard Visualiser
  *
- * Drives fretboard-visualiser.html. Plain JavaScript, no dependencies, works
+ * Drives index.html (the visualiser). Plain JavaScript, no dependencies, works
  * straight from the file system (no server needed).
  *
  * How it fits together
@@ -62,7 +62,10 @@
   var STRING_ROW_HEIGHT = 54;      // px
   var FIRST_STRING_CENTER = 27;    // px from the top of the board
 
-  /** Qualities offered by the Add chord picker, in display order. */
+  /**
+   * Qualities offered by the Add chord picker, in display order: chords in
+   * the Chord row, then (kind: 'scale') the Scale row.
+   */
   var PICKER_QUALITIES = [
     { id: 'Maj',     intervals: [0, 4, 7] },
     { id: 'min',     intervals: [0, 3, 7] },
@@ -79,8 +82,24 @@
     { id: 'sus4',    intervals: [0, 5, 7] },
     { id: 'aug',     intervals: [0, 4, 8] },
     { id: 'add9',    intervals: [0, 4, 7, 2] },
-    { id: '9',       intervals: [0, 4, 7, 10, 2] }
+    { id: '9',       intervals: [0, 4, 7, 10, 2] },
+    { id: 'min9',    intervals: [0, 3, 7, 10, 2] },
+    { id: 'Maj9',    intervals: [0, 4, 7, 11, 2] },
+    { id: '7#9',     intervals: [0, 4, 7, 10, 3] },
+    { id: '7b5',     intervals: [0, 4, 6, 10] },
+    { id: '7#5',     intervals: [0, 4, 8, 10] },
+
+    { id: 'major scale',      intervals: [0, 2, 4, 5, 7, 9, 11], kind: 'scale' },
+    { id: 'minor scale',      intervals: [0, 2, 3, 5, 7, 8, 10], kind: 'scale' },
+    { id: 'major pentatonic', intervals: [0, 2, 4, 7, 9],        kind: 'scale', box: [-1, 2] },
+    { id: 'minor pentatonic', intervals: [0, 3, 5, 7, 10],       kind: 'scale' },
+    { id: 'blues scale',      intervals: [0, 3, 5, 6, 7, 10],    kind: 'scale' },
+    { id: 'dorian',           intervals: [0, 2, 3, 5, 7, 9, 10], kind: 'scale' },
+    { id: 'mixolydian',       intervals: [0, 2, 4, 5, 7, 9, 10], kind: 'scale' },
+    { id: 'harmonic minor',   intervals: [0, 2, 3, 5, 7, 8, 11], kind: 'scale' }
   ];
+
+  var SCALE_RUN_MS = 110;   // gap between notes when a scale plays as a run
 
   /**
    * Chord and scale database from the original visualiser (class.js
@@ -286,6 +305,14 @@
   }
 
   /** A picker quality's intervals in ascending order. */
+  /** The picker quality with this id, or null. */
+  function pickerQualityById(id) {
+    for (var i = 0; i < PICKER_QUALITIES.length; i++) {
+      if (PICKER_QUALITIES[i].id === id) return PICKER_QUALITIES[i];
+    }
+    return null;
+  }
+
   function sortedIntervals(qualityId) {
     return findPickerQuality(qualityId).intervals.slice().sort(function (a, b) { return a - b; });
   }
@@ -294,7 +321,9 @@
   function intervalLabel(semitones, qualityName) {
     if (qualityName === 'aug' && semitones === 8) return '#5';
     if (qualityName === 'dim7' && semitones === 9) return 'bb7';
-    if ((qualityName === '9' || qualityName === 'add9') && semitones === 2) return '9';
+    if (qualityName === '7#5' && semitones === 8) return '#5';
+    if (qualityName === '7#9' && semitones === 3) return '#9';
+    if (['9', 'add9', 'min9', 'Maj9'].indexOf(qualityName) >= 0 && semitones === 2) return '9';
     return INTERVAL_LABELS[semitones];
   }
 
@@ -312,13 +341,23 @@
    * first so they keep their names (e.g. "Maj" rather than "maj").
    */
   var qualityByFormula = {};
+  var qualityRank = {};   // lower = more common; used to order root suggestions
   PICKER_QUALITIES.forEach(function (quality) {
-    qualityByFormula[sortedIntervals(quality.id).join(',')] = quality.id;
+    if (quality.kind !== 'scale') qualityByFormula[sortedIntervals(quality.id).join(',')] = quality.id;
   });
   CHORD_DATABASE.forEach(function (entry) {
     var formula = entry.slice(0, -1).join(',');
     if (!qualityByFormula[formula]) qualityByFormula[formula] = entry[entry.length - 1];
   });
+  // Picker scales rename database scales and modes ("ionian" → "major scale")
+  // but not chords with the same notes (the 6/9 chord is a major pentatonic).
+  PICKER_QUALITIES.forEach(function (quality) {
+    if (quality.kind !== 'scale') return;
+    var formula = sortedIntervals(quality.id).join(',');
+    var existing = qualityByFormula[formula];
+    if (!existing || quality.intervals.length >= 7 || /pentatonic/.test(existing)) qualityByFormula[formula] = quality.id;
+  });
+  Object.keys(qualityByFormula).forEach(function (formula, i) { qualityRank[qualityByFormula[formula]] = i; });
 
   /** Unique pitch classes of a chord's entered notes, in entry order. */
   function enteredPitchClasses(chord) {
@@ -346,6 +385,10 @@
       .map(function (pitchClass) { return (pitchClass - root + 12) % 12; })
       .sort(function (a, b) { return a - b; });
     var quality = qualityByFormula[intervals.join(',')] || null;
+    // A chord or scale added from the picker keeps the name it was picked
+    // with while its notes still match (same notes can have several names).
+    var picked = chord.picked && pickerQualityById(chord.picked);
+    if (picked && sortedIntervals(picked.id).join(',') === intervals.join(',')) quality = picked.id;
     var qualityText = quality || intervals.slice(1).map(function (interval) {
       return NOTE_NAMES[(root + interval) % 12];
     }).join(' ');
@@ -391,6 +434,26 @@
         }
       }
     });
+    return positions;
+  }
+
+  /**
+   * Box shape for a picked scale: every scale note on every string within
+   * `box` frets of the root on the low string. Default box: frets 0 to +3
+   * from the root for pentatonic and blues, −1 to +3 for 7-note scales.
+   */
+  function buildScaleShape(root, intervals, box) {
+    box = box || (intervals.length >= 7 ? [-1, 3] : [0, 3]);
+    var rootFret = (root - openStringPitchClass(5) + 12) % 12;
+    var low = Math.max(0, rootFret + box[0]);   // roots near the nut use open strings
+    var high = low + box[1] - box[0];          // same box width either way
+    var scaleTones = intervals.map(function (interval) { return (root + interval) % 12; });
+    var positions = [];
+    for (var string = STRING_COUNT - 1; string >= 0; string--) {
+      for (var fret = low; fret <= high; fret++) {
+        if (scaleTones.indexOf(pitchClassAt(string, fret)) >= 0) positions.push([string, fret]);
+      }
+    }
     return positions;
   }
 
@@ -529,8 +592,14 @@
   }
 
   /** Strum a chord's entered notes from the low string up, one note per string. */
+  function isScale(chord) {
+    var picked = chord.picked && pickerQualityById(chord.picked);
+    return picked ? picked.kind === 'scale' : enteredPitchClasses(chord).length >= 7;
+  }
+
   function strumChord(chord) {
     if (!chord || !chord.positions) return;
+    if (isScale(chord)) { playScaleRun(chord); return; }
     var lowToHigh = chord.positions.slice().sort(function (a, b) { return b[0] - a[0]; });
     var stringsPlayed = {};
     lowToHigh.forEach(function (position, order) {
@@ -540,6 +609,19 @@
       playGuitarNote(openStringMidi(string) + fret, string, order * STRUM_STAGGER_MS);
       pulseDot(string, fret, order * STRUM_STAGGER_MS);
     });
+  }
+
+  /** Every note of a scale shape, lowest to highest, one after another. */
+  function playScaleRun(chord) {
+    var seen = {};
+    chord.positions
+      .map(function (position) { return { position: position, midi: openStringMidi(position[0]) + position[1] }; })
+      .sort(function (a, b) { return a.midi - b.midi; })
+      .filter(function (note) { if (seen[note.midi]) return false; seen[note.midi] = true; return true; })
+      .forEach(function (note, order) {
+        playGuitarNote(note.midi, note.position[0], order * SCALE_RUN_MS);
+        pulseDot(note.position[0], note.position[1], order * SCALE_RUN_MS);
+      });
   }
 
   /* ========================================================================
@@ -1079,6 +1161,8 @@
     renderProgression(active, chord);
     renderChordPicker();
     renderSettings();
+
+    if (rootHint && (!chord || noteSignature(chord) !== rootHint.signature)) hideRootHint();
   }
 
   /** Chip data for each note of an analysed chord. */
@@ -1244,10 +1328,12 @@
         '" aria-pressed="' + (state.pickerRoot === pitchClass) + '">' + name + '</button>';
     }).join('');
 
-    byId('pickerQualityOptions').innerHTML = PICKER_QUALITIES.map(function (quality) {
-      return '<button type="button" class="picker-quality" data-action="selectPickerQuality" data-value="' + quality.id +
+    var qualityButton = function (quality) {
+      return '<button type="button" class="picker-quality" data-action="selectPickerQuality" data-value="' + escapeHtml(quality.id) +
         '" aria-pressed="' + (state.pickerQuality === quality.id) + '">' + escapeHtml(quality.id) + '</button>';
-    }).join('');
+    };
+    byId('pickerQualityOptions').innerHTML = PICKER_QUALITIES.filter(function (q) { return q.kind !== 'scale'; }).map(qualityButton).join('');
+    byId('pickerScaleOptions').innerHTML = PICKER_QUALITIES.filter(function (q) { return q.kind === 'scale'; }).map(qualityButton).join('');
 
     var previewNotes = sortedIntervals(state.pickerQuality).map(function (interval) {
       return NOTE_NAMES[(state.pickerRoot + interval) % 12];
@@ -1438,6 +1524,194 @@
       playGuitarNote(openStringMidi(string) + fret, string, 0);
       pulseDot(string, fret, 0);
     }
+    scheduleRootHint();
+  }
+
+  /*
+   * Root hint. Students often know a chord's shape but not which note is its
+   * root. When the notes of the selected chord have no name with the current
+   * root but do with another of its notes as the root, a prompt offers that
+   * chord ("Did you mean C Maj?"). It waits until the student has stopped
+   * clicking for ROOT_HINT_DELAY_MS, never repeats for notes it was told
+   * "No" about, and stays away during playback, paint mode and the tutorial.
+   * Cost: at most 12 lookups, once per pause, so nothing noticeable.
+   */
+  var ROOT_HINT_DELAY_MS = 2000;
+  var rootHintTimer = null;
+  var rootHint = null;              // { signature, options } while the prompt is showing
+  var dismissedRootHints = {};      // signature → true after "No"
+
+  /** Chord id + its set of notes: the hint is about these exact notes. */
+  function noteSignature(chord) {
+    return chord.id + ':' + enteredPitchClasses(chord).slice().sort(function (a, b) { return a - b; }).join(',');
+  }
+
+  /** Up to two other roots that give the chord a name, most common first. */
+  function rootSuggestions(chord) {
+    var pitchClasses = enteredPitchClasses(chord);
+    var current = analyzeChord(chord);
+    if (pitchClasses.length < 3 || !current || current.quality) return [];
+    return pitchClasses
+      .filter(function (pitchClass) { return pitchClass !== current.root; })
+      .map(function (pitchClass) {
+        var analysis = analyzeChord(Object.assign({}, chord, { root: pitchClass }));
+        return analysis.quality ? { root: pitchClass, quality: analysis.quality } : null;
+      })
+      .filter(Boolean)
+      .sort(function (a, b) { return qualityRank[a.quality] - qualityRank[b.quality]; })
+      .slice(0, 2);
+  }
+
+  function scheduleRootHint() {
+    clearTimeout(rootHintTimer);
+    hideRootHint();
+    rootHintTimer = setTimeout(showRootHint, ROOT_HINT_DELAY_MS);
+  }
+
+  function showRootHint() {
+    var chord = getActiveChord().chord;
+    var tour = byId('tour');
+    if (!chord || state.playing || state.paintMode || (tour && !tour.hidden)) return;
+    var signature = noteSignature(chord);
+    var options = rootSuggestions(chord);
+    if (dismissedRootHints[signature] || !options.length) return;
+
+    rootHint = { signature: signature, options: options };
+    var el = byId('rootHint');
+    el.innerHTML = '<span>Did you mean</span>' + options.map(function (option) {
+      return '<button type="button" class="root-hint-option" data-action="applyRootHint" data-root="' + option.root + '">' +
+        escapeHtml(NOTE_NAMES[option.root]) + '<i>' + escapeHtml(option.quality) + '</i></button>';
+    }).join('<span>or</span>') +
+      '<button type="button" class="root-hint-dismiss" data-action="dismissRootHint">No</button>';
+    el.hidden = false;
+  }
+
+  function hideRootHint() {
+    rootHint = null;
+    byId('rootHint').hidden = true;
+  }
+
+  /** Insert a chord right after the selected one (so mistakes can be fixed
+   *  mid-progression) and select it. */
+  function insertChord(chord) {
+    var at = state.chords.length ? getActiveChord().index + 1 : 0;
+    var chords = state.chords.slice();
+    chords.splice(at, 0, chord);
+    endTransition();
+    setState({ chords: chords, activeIndex: at, pickerOpen: false });
+  }
+
+  /*
+   * Reordering: long-press a chord card, then drag it. While dragging, a copy
+   * of the card follows the pointer and the real card moves through the list
+   * to show where it will land. Dropping saves the new order and selects the
+   * moved chord. Moving before the long press ends cancels it, so a swipe
+   * still scrolls the page and a tap still selects.
+   */
+  var LONG_PRESS_MS = 350;
+  var PRESS_MOVE_TOLERANCE = 8;   // px
+  var cardPress = null;           // { card, pointerId, x, y, timer } before the long press fires
+  var cardDrag = null;            // { card, ghost, pointerId, offsetX, offsetY, fromIndex }
+  var suppressCardClick = false;  // the click that follows a drop must not select a chord
+
+  function cancelCardPress() {
+    if (!cardPress) return;
+    clearTimeout(cardPress.timer);
+    cardPress.card.classList.remove('is-pressing');
+    cardPress = null;
+  }
+
+  function startCardDrag() {
+    var card = cardPress.card;
+    var rect = card.getBoundingClientRect();
+    var ghost = card.cloneNode(true);
+    ghost.className = 'chord-card chord-card-ghost';
+    ghost.removeAttribute('data-action');
+    ghost.setAttribute('aria-hidden', 'true');
+    ghost.style.width = rect.width + 'px';
+    ghost.style.height = rect.height + 'px';
+    document.body.appendChild(ghost);
+
+    card.classList.remove('is-pressing');
+    card.classList.add('is-drag-placeholder');
+    document.body.classList.add('is-reordering');
+    cardDrag = {
+      card: card, ghost: ghost, pointerId: cardPress.pointerId,
+      offsetX: cardPress.x - rect.left, offsetY: cardPress.y - rect.top,
+      fromIndex: Number(card.dataset.index)
+    };
+    moveCardDrag(cardPress.x, cardPress.y);
+    cardPress = null;
+    suppressCardClick = true;
+    if (navigator.vibrate) navigator.vibrate(12);
+  }
+
+  function moveCardDrag(x, y) {
+    var ghost = cardDrag.ghost;
+    ghost.style.left = (x - cardDrag.offsetX) + 'px';
+    ghost.style.top = (y - cardDrag.offsetY) + 'px';
+
+    // The card goes before the first other card that comes after the pointer
+    // in reading order (a later row, or further right on the same row).
+    var list = byId('chordCardList');
+    var before = null;
+    Array.prototype.some.call(list.children, function (other) {
+      if (other === cardDrag.card) return false;
+      var r = other.getBoundingClientRect();
+      var laterRow = r.top > y;
+      var sameRowAfter = y >= r.top && y <= r.bottom && x < r.left + r.width / 2;
+      if (laterRow || sameRowAfter) { before = other; return true; }
+      return false;
+    });
+    if (cardDrag.card.nextElementSibling !== before) list.insertBefore(cardDrag.card, before);
+  }
+
+  function endCardDrag(cancelled) {
+    var drag = cardDrag;
+    cardDrag = null;
+    drag.ghost.remove();
+    drag.card.classList.remove('is-drag-placeholder');
+    document.body.classList.remove('is-reordering');
+    setTimeout(function () { suppressCardClick = false; }, 0);
+
+    var list = byId('chordCardList');
+    var order = Array.prototype.map.call(list.children, function (card) { return Number(card.dataset.index); });
+    lastCardSignature = '';   // card data-index values are stale either way: rebuild
+    if (cancelled || !list.contains(drag.card) || order.length !== state.chords.length) { render(); return; }
+
+    var moved = state.chords[drag.fromIndex];
+    var chords = order.map(function (index) { return state.chords[index]; });
+    endTransition();
+    setState({ chords: chords, activeIndex: chords.indexOf(moved) });
+  }
+
+  function bindReorderEvents() {
+    var list = byId('chordCardList');
+    list.addEventListener('pointerdown', function (event) {
+      var card = event.target.closest('.chord-card');
+      if (!card || event.button !== 0 || cardDrag) return;
+      cancelCardPress();
+      card.classList.add('is-pressing');
+      cardPress = { card: card, pointerId: event.pointerId, x: event.clientX, y: event.clientY };
+      cardPress.timer = setTimeout(startCardDrag, LONG_PRESS_MS);
+    });
+    window.addEventListener('pointermove', function (event) {
+      if (cardDrag && event.pointerId === cardDrag.pointerId) {
+        moveCardDrag(event.clientX, event.clientY);
+      } else if (cardPress && event.pointerId === cardPress.pointerId) {
+        if (Math.hypot(event.clientX - cardPress.x, event.clientY - cardPress.y) > PRESS_MOVE_TOLERANCE) cancelCardPress();
+      }
+    });
+    ['pointerup', 'pointercancel'].forEach(function (type) {
+      window.addEventListener(type, function (event) {
+        if (cardDrag && event.pointerId === cardDrag.pointerId) endCardDrag(type === 'pointercancel');
+        else cancelCardPress();
+      });
+    });
+    // On touch screens, stop the page scrolling while a card is being dragged,
+    // and stop the long press opening the browser's menu.
+    list.addEventListener('touchmove', function (event) { if (cardDrag) event.preventDefault(); }, { passive: false });
+    list.addEventListener('contextmenu', function (event) { if (cardPress || cardDrag) event.preventDefault(); });
   }
 
   /** Transpose every chord (root, notes and exclusions) by a semitone. */
@@ -1553,14 +1827,25 @@
     selectPickerRoot: function (el) { setState({ pickerRoot: Number(el.dataset.value) }); },
     selectPickerQuality: function (el) { setState({ pickerQuality: el.dataset.value }); },
     addPickedChord: function () {
-      var intervals = findPickerQuality(state.pickerQuality).intervals;
-      var chords = state.chords.concat([createChord(state.pickerRoot, buildVoicing(state.pickerRoot, intervals))]);
-      setState({ chords: chords, activeIndex: chords.length - 1, pickerOpen: false });
+      var quality = findPickerQuality(state.pickerQuality);
+      var shape = quality.kind === 'scale' ? buildScaleShape : buildVoicing;
+      var chord = createChord(state.pickerRoot, shape(state.pickerRoot, quality.intervals, quality.box));
+      chord.picked = quality.id;
+      insertChord(chord);
       if (state.strumOn) strumChord(getActiveChord().chord);
     },
-    addBlankChord: function () {
-      var chords = state.chords.concat([createChord(null)]);
-      setState({ chords: chords, activeIndex: chords.length - 1, pickerOpen: false });
+    addBlankChord: function () { insertChord(createChord(null)); },
+
+    // Root hint
+    applyRootHint: function (el) {
+      var root = Number(el.dataset.root);
+      hideRootHint();
+      updateActiveChord(function (chord) { chord.root = root; return chord; });
+      if (state.strumOn) strumChord(getActiveChord().chord);
+    },
+    dismissRootHint: function () {
+      if (rootHint) dismissedRootHints[rootHint.signature] = true;
+      hideRootHint();
     },
 
     // Settings
@@ -1630,6 +1915,7 @@
   }
 
   function handleClick(event) {
+    if (suppressCardClick && event.target.closest('.chord-card')) { suppressCardClick = false; return; }
     var cell = event.target.closest('.fret-cell');
     if (cell) {
       getAudioContext();
@@ -1668,6 +1954,7 @@
     nameInput.addEventListener('blur', function () { setState({ title: nameInput.value.trim() }); });
 
     bindPaintEvents();
+    bindReorderEvents();
   }
 
   /* ========================================================================
@@ -1728,6 +2015,7 @@
       drawingSize: canvasSize ? [canvasSize.width, canvasSize.height] : null,
       chords: state.chords.map(function (chord) {
         var saved = { root: chord.root, bars: chord.bars, positions: chord.positions, excluded: chord.excluded || [] };
+        if (chord.picked) saved.picked = chord.picked;
         var strokes = withDrawings ? chordStrokes[chord.id] || [] : [];
         if (strokes.length) saved.strokes = strokes.map(encodeStroke);
         return saved;
@@ -1773,6 +2061,7 @@
       var chord = createChord(isInteger(saved.root, 0, 11) ? saved.root : null, positions);
       chord.bars = isInteger(saved.bars, 1, 16) ? saved.bars : 1;
       chord.excluded = (Array.isArray(saved.excluded) ? saved.excluded : []).filter(function (pc) { return isInteger(pc, 0, 11); });
+      if (typeof saved.picked === 'string' && pickerQualityById(saved.picked)) chord.picked = saved.picked;
       if (Array.isArray(saved.strokes) && saved.strokes.length) drawings.push({ chord: chord, strokes: saved.strokes });
       return chord;
     });

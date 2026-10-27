@@ -1,0 +1,131 @@
+<!doctype html>
+<!--
+  Fretnoodle — About
+
+  What Fretnoodle is: the fretboard visualiser, the upcoming Fretboard King
+  game, and the person who makes them.
+
+  Styles: assets/css/site.css · Script: assets/js/site.js
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>About · Fretnoodle</title>
+  <meta name="description" content="Fretnoodle makes apps and games for learning the guitar neck: the free fretboard visualiser and Fretboard King, a game for iOS and Android. Made by guitarist Strangeloop.">
+  <link rel="icon" type="image/x-icon" href="favicon.ico?v=2">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..600&family=Inter:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="assets/css/site.css?v=11">
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-CQBNR4ZQDX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-CQBNR4ZQDX');
+  </script>
+</head>
+<body>
+<div class="container">
+
+  <header class="site-header">
+    <a class="brand" href="index.html"><span class="brand-word">fretnoodle</span><span class="brand-dot" aria-hidden="true"></span></a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="index.html">Visualiser</a>
+      <a href="lessons.html">Lessons</a>
+      <a href="fretboard-king.html">Fretboard King</a>
+      <a href="about.html" aria-current="page">About</a>
+    </nav>
+    <a class="btn btn-primary btn-small" href="index.html">Open the visualiser</a>
+  </header>
+
+  <main>
+
+    <section class="about-hero" aria-labelledby="aboutTitle">
+      <p class="eyebrow">About Fretnoodle</p>
+      <h1 class="display hero-title" id="aboutTitle">Apps and games for learning the <i>whole</i> neck.</h1>
+      <p class="lead">Tools that make guitar theory visible.</p>
+      <div class="mini-neck" data-root="0" data-intervals="0,4,7,11" data-frets="12" data-label="Every C major 7 chord tone across the first 12 frets"></div>
+    </section>
+
+    <!-- Visualiser ------------------------------------------------------ -->
+    <section class="section" aria-labelledby="visualiserTitle">
+      <div class="panel product">
+        <div class="product-text">
+          <span class="badge">Free · in your browser</span>
+          <h3 id="visualiserTitle">The fretboard visualiser</h3>
+          <p>See every note of any chord across all 18 frets.</p>
+          <ul class="feature-list">
+            <li>Full map of every chord tone</li>
+            <li>Progressions with animated voice leading</li>
+            <li>Paint, save, share and export PDF notes</li>
+            <li>Guitar sounds, metronome, tunings, MIDI guitar</li>
+          </ul>
+          <div class="button-row">
+            <a class="btn btn-primary" href="index.html">Open the visualiser</a>
+          </div>
+        </div>
+        <div class="mini-neck" data-root="9" data-intervals="0,3,7,10" data-frets="12" data-label="Every A minor 7 chord tone across the first 12 frets"></div>
+      </div>
+    </section>
+
+    <!-- Fretboard King -------------------------------------------------- -->
+    <section class="section" id="fretboard-king" aria-labelledby="kingTitle">
+      <div class="panel product">
+        <div class="product-text">
+          <span class="badge">Coming soon · iOS &amp; Android</span>
+          <h3 id="kingTitle">Fretboard King</h3>
+          <p>Learn chords, intervals and notes on the fretboard as a game.</p>
+          <div class="button-row">
+            <a class="btn btn-primary" href="fretboard-king.html">See Fretboard King</a>
+          </div>
+        </div>
+        <a class="king-shot" href="fretboard-king.html">
+          <img src="assets/images/fretboard-king/screen-21.png" alt="Fretboard King: building chords on the fretboard" width="924" height="540" loading="lazy">
+        </a>
+      </div>
+    </section>
+
+    <!-- Creator --------------------------------------------------------- -->
+    <section class="section" aria-labelledby="creatorTitle">
+      <div class="panel creator">
+        <img src="assets/images/strangeloop-portrait.jpg" alt="Strangeloop with his guitar" width="1000" height="1500" loading="lazy">
+        <div class="creator-text">
+          <p class="eyebrow">Made by</p>
+          <div class="name-block">
+            <h3 id="creatorTitle">Strangeloop</h3>
+            <p class="real-name">Adesh Vinod</p>
+          </div>
+          <p>Touring guitarist, electronic artist and teacher who builds his own learning apps.</p>
+          <div class="button-row">
+            <a class="btn btn-primary" href="lessons.html">Lessons with Strangeloop</a>
+            <a class="btn" href="https://www.instagram.com/strangeloop__/" target="_blank" rel="noopener">Instagram</a>
+            <a class="btn" href="https://open.spotify.com/track/6d8cV8W8haRmxL6HJ8miiX" target="_blank" rel="noopener">Spotify</a>
+            <a class="btn" href="https://www.youtube.com/watch?v=9fj053LZE0A" target="_blank" rel="noopener">YouTube</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <a class="brand" href="index.html"><span class="brand-word">fretnoodle</span><span class="brand-dot" aria-hidden="true"></span></a>
+    <nav aria-label="Footer">
+      <a href="index.html">Visualiser</a>
+      <a href="lessons.html">Lessons</a>
+      <a href="fretboard-king.html">Fretboard King</a>
+      <a href="about.html">About</a>
+      <a href="https://www.instagram.com/strangeloop__/" target="_blank" rel="noopener">Instagram</a>
+    </nav>
+    <span>© <span data-year></span> Fretnoodle</span>
+  </footer>
+
+</div>
+<script src="assets/js/site.js?v=2"></script>
+</body>
+</html>

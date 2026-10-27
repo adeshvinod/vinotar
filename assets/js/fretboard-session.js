@@ -1,7 +1,7 @@
 /**
  * Fretnoodle — Sessions: autosave, files, share links and PDF notes
  *
- * Drives the Session menu in the header of fretboard-visualiser.html.
+ * Drives the Session menu in the header of index.html (the visualiser).
  *
  *   Autosave     Every change is kept in this browser (localStorage) and
  *                restored on the next visit.
